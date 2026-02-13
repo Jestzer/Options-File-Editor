@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Options File Editor</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/validation.css">
+    <link rel="stylesheet" href="css/modal.css">
+</head>
+<body>
+    <!-- Toolbar -->
+    <header id="toolbar">
+        <button id="btn-new" class="btn">New</button>
+        <div class="separator"></div>
+        <button id="btn-load-license" class="btn">Load License</button>
+        <button id="btn-load-options" class="btn">Load Options</button>
+        <div class="separator"></div>
+        <button id="btn-export" class="btn btn-primary" disabled>Export .opt</button>
+        <input type="file" id="license-file-input" accept=".lic,.dat">
+        <input type="file" id="options-file-input" accept=".opt">
+        <label>
+            <input type="checkbox" id="chk-case-insensitive">
+            GROUPCASEINSENSITIVE
+        </label>
+    </header>
+
+    <!-- Main 3-column layout -->
+    <main id="app-layout">
+        <!-- Left: License summary -->
+        <aside id="license-panel" class="panel">
+            <div class="panel-header">License Summary</div>
+            <div class="panel-body">
+                <div id="license-products">
+                    <div class="empty-state">Load a license file to see products.</div>
+                </div>
+                <div id="seat-summary-header" class="panel-header" style="display:none; margin-top:12px; padding-left:0; border:none;">Seat Usage</div>
+                <div id="seat-summary"></div>
+            </div>
+        </aside>
+
+        <!-- Center: Directive list -->
+        <section id="directive-list-panel" class="panel">
+            <div class="panel-header">Options File Directives</div>
+            <div class="panel-body">
+                <div id="directive-list">
+                    <div class="empty-state">Load an options file or add directives to get started.</div>
+                </div>
+                <button id="btn-add-directive" class="btn btn-add">+ Add Directive</button>
+            </div>
+        </section>
+
+        <!-- Right: Editor form + validation -->
+        <aside id="editor-panel" class="panel">
+            <div class="panel-header">Edit Directive</div>
+            <div class="panel-body">
+                <div id="directive-form-container">
+                    <div class="empty-state">Select a directive to edit, or click "+ Add Directive".</div>
+                </div>
+                <div class="panel-header" style="margin-top:16px; padding-left:0; border:none;">Validation</div>
+                <div class="validation-count" id="validation-count"></div>
+                <div id="validation-results"></div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Modal overlay -->
+    <div id="modal-overlay" class="hidden">
+        <div id="modal-dialog">
+            <div id="modal-title"></div>
+            <div id="modal-body"></div>
+            <div id="modal-actions"></div>
+        </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

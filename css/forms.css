@@ -1,0 +1,210 @@
+/* Buttons */
+.btn {
+    padding: 6px 14px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.btn:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn:active {
+    background: var(--accent-hover);
+}
+
+.btn:disabled {
+    border-color: var(--border-color);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    background: transparent;
+}
+
+.btn:disabled:hover {
+    background: transparent;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+}
+
+.btn-danger {
+    border-color: var(--error);
+}
+
+.btn-danger:hover {
+    background: var(--error);
+    color: #fff;
+}
+
+.btn-sm {
+    padding: 3px 8px;
+    font-size: 12px;
+}
+
+.btn-add {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border-style: dashed;
+    font-size: 14px;
+}
+
+/* Form controls */
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 7px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23aaa'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* Form actions row */
+.form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+/* Directive row in list */
+.directive-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.directive-row:hover {
+    background: var(--bg-hover);
+}
+
+.directive-row.selected {
+    background: var(--bg-active);
+    border-left-color: var(--accent);
+}
+
+.directive-row.has-error {
+    border-left-color: var(--error);
+}
+
+.directive-row.has-warning {
+    border-left-color: var(--warning);
+}
+
+.directive-type-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+}
+
+.badge-include { background: #1a472a; color: #4caf50; }
+.badge-exclude { background: #4a1a1a; color: #ef5350; }
+.badge-includeall { background: #1a3a2a; color: #66bb6a; }
+.badge-excludeall { background: #3a1a1a; color: #ef9a9a; }
+.badge-reserve { background: #1a2a4a; color: #42a5f5; }
+.badge-max { background: #3a2a1a; color: #ffa726; }
+.badge-group { background: #2a1a4a; color: #ab47bc; }
+.badge-hostgroup { background: #2a2a4a; color: #7e57c2; }
+.badge-comment { background: #2a2a2a; color: #888; }
+.badge-groupcaseinsensitive { background: #2a3a3a; color: #80cbc4; }
+
+.directive-summary {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+.directive-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.directive-row:hover .directive-actions {
+    opacity: 1;
+}
+
+.directive-actions button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.directive-actions button:hover {
+    background: var(--bg-input);
+    color: var(--text-primary);
+}
+
+/* Hidden file inputs */
+input[type="file"] {
+    display: none;
+}
