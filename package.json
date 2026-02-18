@@ -1,0 +1,23 @@
+{
+  "name": "options-file-editor",
+  "version": "1.0.0",
+  "description": "A browser-based editor for creating and modifying FlexLM options files (`.opt`) used with MathWorks license files. Load your license file to enforce rules like seat counts, valid product names, and NNU restrictions while editing.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jestzer/Options-File-Editor.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jestzer/Options-File-Editor/issues"
+  },
+  "homepage": "https://github.com/Jestzer/Options-File-Editor#readme",
+  "devDependencies": {
+    "vitest": "^4.0.18"
+  }
+}
