@@ -379,6 +379,7 @@ export function parseLicenseFile(rawText) {
 
         // --- USE_SERVER ---
         if (trimmed.startsWith("USE_SERVER")) {
+            warnings.push("USE_SERVER was found in the license file. This line is not needed and can be removed.");
             continue;
         }
 

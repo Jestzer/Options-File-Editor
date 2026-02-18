@@ -49,7 +49,7 @@ export function initDirectiveList(state, { onSelectDirective }) {
             // Type badge.
             const badge = document.createElement("span");
             badge.className = `directive-type-badge ${TYPE_BADGES[d.type] || ""}`;
-            badge.textContent = d.type === "GROUPCASEINSENSITIVE" ? "CASE" : d.type.replace("_", " ");
+            badge.textContent = d.type === "GROUPCASEINSENSITIVE" ? "GROUPCASEINSENSITIVE" : d.type.replace("_", " ");
             row.appendChild(badge);
 
             // Summary text.

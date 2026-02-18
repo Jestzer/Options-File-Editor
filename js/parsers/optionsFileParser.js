@@ -249,7 +249,7 @@ export function parseOptionsFile(rawText) {
 
             const lineParts = currentLine.split(" ").filter(p => p.trim());
             if (lineParts.length < 5) {
-                return { document: null, warnings, error: `Incorrectly formatted MAX line (missing information): "${currentLine}"` };
+                return { document: null, warnings, error: `Incorrectly formatted MAX line (missing information). A MAX line should be formatted as: MAX <number_of_seats> <product_name> <client_type> <client_specified>. Example: MAX 5 MATLAB USER john_doe. The line in question: "${currentLine}"` };
             }
 
             const maxSeats = Number(lineParts[1]);

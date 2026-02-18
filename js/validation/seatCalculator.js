@@ -72,13 +72,13 @@ export function calculate(state) {
                 results.push({
                     severity: "error",
                     directiveId: null,
-                    message: `NNU product "${entry.productName}" on license ${entry.licenseNumber}: more users specified (${entry.originalSeatCount - entry.seatCount}) than seats available (${entry.originalSeatCount}).`
+                    message: `NNU product "${entry.productName}" on license ${entry.licenseNumber}: more users specified (${entry.originalSeatCount - entry.seatCount}) than ${entry.originalSeatCount === 1 ? "seat" : "seats"} available (${entry.originalSeatCount}).`
                 });
             } else if (entry.licenseOffering === "lo=CN") {
                 results.push({
                     severity: "warning",
                     directiveId: null,
-                    message: `CN product "${entry.productName}" on license ${entry.licenseNumber}: more users specified than seats available. Possible License Manager Error -4.`
+                    message: `CN product "${entry.productName}" on license ${entry.licenseNumber}: more users specified than ${entry.originalSeatCount === 1 ? "seat" : "seats"} available. Possible License Manager Error -4.`
                 });
             }
         }

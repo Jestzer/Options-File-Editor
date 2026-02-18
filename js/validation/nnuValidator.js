@@ -47,6 +47,32 @@ export function validate(state) {
         }
     }
 
+    // Check if any NNU products have no users assigned via INCLUDE.
+    if (hasNnu) {
+        const nnuProductNames = new Set(
+            state.licenseData.products
+                .filter(p => p.licenseOffering === "NNU")
+                .map(p => p.productName)
+        );
+
+        const includes = doc.getByType("INCLUDE");
+
+        for (const nnuProduct of nnuProductNames) {
+            const hasAssignment = includes.some(d =>
+                d.productName === nnuProduct &&
+                (d.clientType === "USER" || d.clientType === "GROUP")
+            );
+
+            if (!hasAssignment) {
+                results.push({
+                    severity: "warning",
+                    directiveId: null,
+                    message: `NNU product "${nnuProduct}" has no seats assigned. NNU products require INCLUDE lines with USER or GROUP to assign seats.`
+                });
+            }
+        }
+    }
+
     // Check NNU products used with non-USER/GROUP client types.
     if (hasNnu) {
         const nnuProductNames = new Set(
@@ -67,6 +93,90 @@ export function validate(state) {
                     message: `NNU product "${d.productName}" should use USER or GROUP client type, not ${d.clientType}.`
                 });
             }
+        }
+    }
+
+    // Suggest MAX directives for users INCLUDEd on NNU products.
+    if (hasNnu) {
+        const nnuProductNames = new Set(
+            state.licenseData.products
+                .filter(p => p.licenseOffering === "NNU")
+                .map(p => p.productName)
+        );
+
+        const includes = doc.getByType("INCLUDE");
+        const existingMaxDirectives = doc.getByType("MAX");
+        const groups = doc.getGroups();
+        const missingMaxDirectives = [];
+
+        for (const d of includes) {
+            if (!d.productName || !nnuProductNames.has(d.productName)) continue;
+
+            // Use MAX 1 if the product only has 1 seat, otherwise MAX 2.
+            const totalSeats = state.licenseData.getTotalSeats(d.productName);
+            const maxSeatsToUse = totalSeats <= 1 ? 1 : 2;
+
+            if (d.clientType === "USER") {
+                // Check if a MAX line already exists for this user + product.
+                const hasMax = existingMaxDirectives.some(m =>
+                    m.productName === d.productName &&
+                    m.clientType === "USER" &&
+                    m.clientSpecified === d.clientSpecified
+                );
+
+                if (!hasMax) {
+                    missingMaxDirectives.push({
+                        type: "MAX",
+                        maxSeats: maxSeatsToUse,
+                        productName: d.productName,
+                        clientType: "USER",
+                        clientSpecified: d.clientSpecified
+                    });
+                }
+            } else if (d.clientType === "GROUP") {
+                // Find the group and check each member.
+                const group = groups.find(g => g.groupName === d.clientSpecified);
+                if (!group || !group.members) continue;
+
+                for (const member of group.members) {
+                    const hasMax = existingMaxDirectives.some(m =>
+                        m.productName === d.productName &&
+                        m.clientType === "USER" &&
+                        m.clientSpecified === member
+                    );
+
+                    if (!hasMax) {
+                        // Avoid duplicates in the suggestion list.
+                        const alreadySuggested = missingMaxDirectives.some(m =>
+                            m.productName === d.productName &&
+                            m.clientSpecified === member
+                        );
+
+                        if (!alreadySuggested) {
+                            missingMaxDirectives.push({
+                                type: "MAX",
+                                maxSeats: maxSeatsToUse,
+                                productName: d.productName,
+                                clientType: "USER",
+                                clientSpecified: member
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        if (missingMaxDirectives.length > 0) {
+            const userWord = missingMaxDirectives.length === 1 ? "user" : "users";
+            results.push({
+                severity: "suggestion",
+                directiveId: null,
+                message: `NNU: ${missingMaxDirectives.length} ${userWord} across NNU products are missing MAX seat limits. Adding MAX lines prevents users from hogging seats.`,
+                action: {
+                    label: "Add MAX lines",
+                    directives: missingMaxDirectives
+                }
+            });
         }
     }
 

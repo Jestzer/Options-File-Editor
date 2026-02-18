@@ -15,10 +15,11 @@ export function initValidationPanel(state, { directiveList }) {
         }
 
         // Count by severity.
-        let errors = 0, warnings = 0, infos = 0;
+        let errors = 0, warnings = 0, infos = 0, suggestions = 0;
         for (const r of results) {
             if (r.severity === "error") errors++;
             else if (r.severity === "warning") warnings++;
+            else if (r.severity === "suggestion") suggestions++;
             else infos++;
         }
 
@@ -35,6 +36,12 @@ export function initValidationPanel(state, { directiveList }) {
             span.textContent = `${warnings} warning${warnings !== 1 ? "s" : ""}`;
             countEl.appendChild(span);
         }
+        if (suggestions > 0) {
+            const span = document.createElement("span");
+            span.className = "count-suggestion";
+            span.textContent = `${suggestions} suggestion${suggestions !== 1 ? "s" : ""}`;
+            countEl.appendChild(span);
+        }
         if (infos > 0) {
             const span = document.createElement("span");
             span.className = "count-info";
@@ -49,11 +56,28 @@ export function initValidationPanel(state, { directiveList }) {
 
             const icon = document.createElement("span");
             icon.className = "validation-icon";
-            icon.textContent = r.severity === "error" ? "\u2716" : r.severity === "warning" ? "\u26A0" : "\u2139";
+            icon.textContent = r.severity === "error" ? "\u2716"
+                : r.severity === "warning" ? "\u26A0"
+                : r.severity === "suggestion" ? "\uD83D\uDCA1"
+                : "\u2139\uFE0F";
             item.appendChild(icon);
 
             const text = document.createTextNode(r.message);
             item.appendChild(text);
+
+            // Render action button for suggestions.
+            if (r.action && r.action.directives && r.action.directives.length > 0) {
+                const btn = document.createElement("button");
+                btn.className = "btn btn-suggestion-action";
+                btn.textContent = r.action.label || "Apply";
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    for (const directive of r.action.directives) {
+                        state.document.add({ ...directive });
+                    }
+                });
+                item.appendChild(btn);
+            }
 
             // Click to highlight the relevant directive.
             if (r.directiveId) {

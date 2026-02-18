@@ -80,6 +80,20 @@ export function validate(state) {
                     message: `MAX line has an invalid seat count: ${d.maxSeats}.`
                 });
             }
+
+            // Check if MAX seats exceed the total available for the product.
+            if (state.licenseData.isLoaded && d.productName) {
+                const totalSeats = state.licenseData.getTotalSeats(d.productName);
+                if (totalSeats > 0 && d.maxSeats > totalSeats) {
+                    const maxSeatWord = d.maxSeats === 1 ? "seat" : "seats";
+                    const totalSeatWord = totalSeats === 1 ? "seat" : "seats";
+                    results.push({
+                        severity: "warning",
+                        directiveId: d.uid,
+                        message: `MAX line specifies ${d.maxSeats} ${maxSeatWord} for "${d.productName}", but only ${totalSeats} ${totalSeatWord} are available in the license file.`
+                    });
+                }
+            }
         }
 
         // GROUP / HOST_GROUP: must have at least one member.
