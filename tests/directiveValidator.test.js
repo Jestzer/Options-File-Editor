@@ -179,6 +179,24 @@ describe("directiveValidator", () => {
             const results = validate(state);
             expect(results.filter(r => r.message.includes("Duplicate"))).toHaveLength(0);
         });
+
+        it("no warning when INCLUDEs differ by license number", () => {
+            const state = buildState([], [
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice", licenseNumber: "40680675" }),
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice", licenseNumber: "41231281" }),
+            ]);
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("Duplicate"))).toHaveLength(0);
+        });
+
+        it("no warning when INCLUDEs differ by product key", () => {
+            const state = buildState([], [
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice", productKey: "ABC123" }),
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice", productKey: "XYZ789" }),
+            ]);
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("Duplicate"))).toHaveLength(0);
+        });
     });
 
     describe("INCLUDE + EXCLUDE conflict", () => {

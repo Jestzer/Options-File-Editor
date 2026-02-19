@@ -130,7 +130,7 @@ export function validate(state) {
     const includeSeen = new Set();
     for (const d of state.document.getByType("INCLUDE")) {
         if (!d.productName || !d.clientType || !d.clientSpecified) continue;
-        const key = `${d.productName}|${d.clientType}|${d.clientSpecified}`;
+        const key = `${d.productName}|${d.licenseNumber || ""}|${d.productKey || ""}|${d.clientType}|${d.clientSpecified}`;
         if (includeSeen.has(key)) {
             results.push({
                 severity: "warning",

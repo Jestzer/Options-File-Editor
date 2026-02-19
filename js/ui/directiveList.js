@@ -141,8 +141,12 @@ function directiveSummaryText(d) {
         case "INCLUDE":
         case "EXCLUDE":
         case "INCLUDE_BORROW":
-        case "EXCLUDE_BORROW":
-            return `${d.productName} ${d.clientType} ${d.clientSpecified}`;
+        case "EXCLUDE_BORROW": {
+            let qualifier = "";
+            if (d.licenseNumber) qualifier += `:asset_info=${d.licenseNumber}`;
+            if (d.productKey) qualifier += `:key=${d.productKey}`;
+            return `${d.productName}${qualifier} ${d.clientType} ${d.clientSpecified}`;
+        }
         case "INCLUDEALL":
         case "EXCLUDEALL":
             return `${d.clientType} ${d.clientSpecified}`;
