@@ -142,20 +142,20 @@ export function validate(state) {
         }
     }
 
-    // Detect INCLUDE + EXCLUDE conflicts for the same product/clientType/clientSpecified.
+    // Detect INCLUDE + EXCLUDE conflicts for the same product/clientType/clientSpecified/licenseNumber/productKey.
     const excludeKeys = new Set();
     for (const d of state.document.getByType("EXCLUDE")) {
         if (!d.productName || !d.clientType || !d.clientSpecified) continue;
-        excludeKeys.add(`${d.productName}|${d.clientType}|${d.clientSpecified}`);
+        excludeKeys.add(`${d.productName}|${d.licenseNumber || ""}|${d.productKey || ""}|${d.clientType}|${d.clientSpecified}`);
     }
     for (const d of state.document.getByType("INCLUDE")) {
         if (!d.productName || !d.clientType || !d.clientSpecified) continue;
-        const key = `${d.productName}|${d.clientType}|${d.clientSpecified}`;
+        const key = `${d.productName}|${d.licenseNumber || ""}|${d.productKey || ""}|${d.clientType}|${d.clientSpecified}`;
         if (excludeKeys.has(key)) {
             results.push({
                 severity: "warning",
                 directiveId: d.uid,
-                message: `"${d.productName}" has both INCLUDE and EXCLUDE for ${d.clientType} "${d.clientSpecified}". EXCLUDE takes priority in FlexLM.`
+                message: `"${d.productName}" has both INCLUDE and EXCLUDE for ${d.clientType} "${d.clientSpecified}" on the same license. EXCLUDE takes priority in FlexLM.`
             });
         }
     }

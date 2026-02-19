@@ -199,6 +199,24 @@ describe("directiveValidator", () => {
             const results = validate(state);
             expect(results.filter(r => r.message.includes("EXCLUDE takes priority"))).toHaveLength(0);
         });
+
+        it("no warning when INCLUDE and EXCLUDE are on different license numbers", () => {
+            const state = buildState([], [
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice", licenseNumber: "40680675" }),
+                buildDirective("EXCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice", licenseNumber: "41231281" }),
+            ]);
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("EXCLUDE takes priority"))).toHaveLength(0);
+        });
+
+        it("no warning when INCLUDE and EXCLUDE are on different product keys", () => {
+            const state = buildState([], [
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice", productKey: "ABC123" }),
+                buildDirective("EXCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice", productKey: "XYZ789" }),
+            ]);
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("EXCLUDE takes priority"))).toHaveLength(0);
+        });
     });
 
     describe("INCLUDE_BORROW without INCLUDE", () => {
