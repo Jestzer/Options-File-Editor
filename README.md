@@ -13,7 +13,14 @@ This project is **not affiliated with MathWorks**. It was created to help licens
   - Product name verification against 222+ MathWorks products
   - GROUP/HOST_GROUP reference integrity
   - Seat overdraft detection (error for NNU, warning for CN)
-  - NNU-specific rules (must have INCLUDE with USER or GROUP)
+  - NNU-specific rules (must have INCLUDE with USER or GROUP, multi-license ambiguity)
+  - Duplicate INCLUDE detection
+  - INCLUDE + EXCLUDE conflict detection (respects license numbers and product keys)
+  - INCLUDE_BORROW without a corresponding INCLUDE
+  - RESERVE consuming all available seats
+  - MAX exceeding license seat count
+  - Expired product warnings
+  - Borrow directives on NNU products (not applicable)
   - Wildcard and IP address warnings
 - **Seat usage summary** with visual progress bars per product
 - **Export** to a properly formatted `.opt` file
@@ -39,6 +46,15 @@ If you use VS Code, install the [Live Server](https://marketplace.visualstudio.c
 
 Any HTTP server that serves static files will work (e.g., `npx serve`, Nginx, Apache).
 
+## Testing
+
+Tests use [Vitest](https://vitest.dev/). Install dependencies and run:
+
+```bash
+npm install
+npm test
+```
+
 ## Usage
 
 1. **Load a license file** (`.lic` or `.dat`) using the "Load License" button in the toolbar. This populates the left panel with your licensed products and enables license-aware validation.
@@ -58,37 +74,51 @@ Options-File-Editor/
 │   ├── forms.css           # Form controls, directive rows
 │   ├── validation.css      # Error/warning/info styles
 │   └── modal.css           # Modal dialog
-└── js/
-    ├── app.js              # Entry point
-    ├── data/
-    │   └── masterProductsList.js   # 222+ MathWorks product names
-    ├── state/
-    │   ├── EditorState.js          # Central state and event bus
-    │   ├── LicenseData.js          # Parsed license file model
-    │   └── OptionsDocument.js      # Editable directive list
-    ├── parsers/
-    │   ├── licenseFileParser.js    # Parses .lic/.dat files
-    │   └── optionsFileParser.js    # Parses .opt files
-    ├── validation/
-    │   ├── validationEngine.js     # Orchestrates all validators
-    │   ├── productValidator.js     # Product name validation
-    │   ├── directiveValidator.js   # Field-level validation
-    │   ├── groupValidator.js       # GROUP/HOST_GROUP references
-    │   ├── seatCalculator.js       # Seat subtraction logic
-    │   └── nnuValidator.js         # NNU-specific rules
-    ├── export/
-    │   └── optionsFileExporter.js  # Generates .opt file text
-    ├── ui/                         # UI modules
-    │   ├── toolbar.js
-    │   ├── licensePanel.js
-    │   ├── directiveList.js
-    │   ├── directiveEditor.js
-    │   ├── validationPanel.js
-    │   └── modal.js
-    └── util/
-        ├── eventBus.js     # Pub/sub event system
-        ├── uid.js          # Unique ID generator
-        └── dateParser.js   # Date parsing utility
+├── js/
+│   ├── app.js              # Entry point
+│   ├── version.js          # App version constant
+│   ├── data/
+│   │   └── masterProductsList.js   # 222+ MathWorks product names
+│   ├── state/
+│   │   ├── EditorState.js          # Central state and event bus
+│   │   ├── LicenseData.js          # Parsed license file model
+│   │   └── OptionsDocument.js      # Editable directive list
+│   ├── parsers/
+│   │   ├── licenseFileParser.js    # Parses .lic/.dat files
+│   │   └── optionsFileParser.js    # Parses .opt files
+│   ├── validation/
+│   │   ├── validationEngine.js     # Orchestrates all validators
+│   │   ├── productValidator.js     # Product name and expiration validation
+│   │   ├── directiveValidator.js   # Field-level and cross-directive validation
+│   │   ├── groupValidator.js       # GROUP/HOST_GROUP references
+│   │   ├── seatCalculator.js       # Seat subtraction logic
+│   │   └── nnuValidator.js         # NNU-specific rules
+│   ├── export/
+│   │   └── optionsFileExporter.js  # Generates .opt file text
+│   ├── ui/                         # UI modules
+│   │   ├── toolbar.js
+│   │   ├── licensePanel.js
+│   │   ├── directiveList.js
+│   │   ├── directiveEditor.js
+│   │   ├── groupEditor.js
+│   │   ├── seatSummaryPanel.js
+│   │   ├── validationPanel.js
+│   │   └── modal.js
+│   └── util/
+│       ├── eventBus.js     # Pub/sub event system
+│       ├── uid.js          # Unique ID generator
+│       └── dateParser.js   # Date parsing utility
+└── tests/
+    ├── helpers.js                  # Shared test utilities
+    ├── dateParser.test.js
+    ├── directiveValidator.test.js
+    ├── groupValidator.test.js
+    ├── licenseFileParser.test.js
+    ├── nnuValidator.test.js
+    ├── optionsFileExporter.test.js
+    ├── optionsFileParser.test.js
+    ├── productValidator.test.js
+    └── seatCalculator.test.js
 ```
 
 ## Browser Compatibility
