@@ -67,7 +67,7 @@ export function validate(state) {
                 results.push({
                     severity: "warning",
                     directiveId: null,
-                    message: `NNU product "${nnuProduct}" has no seats assigned. NNU products require INCLUDE lines with USER or GROUP to assign seats.`
+                    message: `NNU product "${nnuProduct}" has no seats assigned. NNU products require INCLUDE lines with USER(s) or GROUP(s) to use the product(s).`
                 });
             }
         }
