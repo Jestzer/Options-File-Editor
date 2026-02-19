@@ -157,7 +157,7 @@ function directiveSummaryText(d) {
         case "COMMENT":
             return d.text;
         case "GROUPCASEINSENSITIVE":
-            return "CASE GROUPCASEINSENSITIVE ON";
+            return "ON";
         default:
             return "";
     }
