@@ -73,6 +73,44 @@ export function validate(state) {
         }
     }
 
+    // Warn when an INCLUDE targets an NNU product that exists on multiple licenses
+    // but does not specify a license number, causing ambiguous seat subtraction.
+    if (hasNnu) {
+        const nnuProducts = state.licenseData.products.filter(p => p.licenseOffering === "NNU");
+
+        // Map product name (lowercase) → set of license numbers.
+        const nnuLicenseCounts = new Map();
+        for (const p of nnuProducts) {
+            const key = p.productName.toLowerCase();
+            if (!nnuLicenseCounts.has(key)) {
+                nnuLicenseCounts.set(key, new Set());
+            }
+            nnuLicenseCounts.get(key).add(p.licenseNumber);
+        }
+
+        // Only care about products on 2+ licenses.
+        const multiLicenseNnuProducts = new Map(
+            [...nnuLicenseCounts].filter(([, nums]) => nums.size > 1)
+        );
+
+        if (multiLicenseNnuProducts.size > 0) {
+            const includes = doc.getByType("INCLUDE");
+            for (const d of includes) {
+                if (!d.productName) continue;
+                if (d.clientType !== "USER" && d.clientType !== "GROUP") continue;
+                if (!multiLicenseNnuProducts.has(d.productName.toLowerCase())) continue;
+                if (d.licenseNumber) continue; // Already qualified — no ambiguity.
+
+                const licenseCount = multiLicenseNnuProducts.get(d.productName.toLowerCase()).size;
+                results.push({
+                    severity: "warning",
+                    directiveId: d.uid,
+                    message: `NNU product "${d.productName}" exists on ${licenseCount} licenses. This INCLUDE does not specify a license number, so seats will be subtracted from all of them.`
+                });
+            }
+        }
+    }
+
     // Check NNU products used with non-USER/GROUP client types.
     if (hasNnu) {
         const nnuProductNames = new Set(

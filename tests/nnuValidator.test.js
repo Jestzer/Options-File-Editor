@@ -83,6 +83,59 @@ describe("nnuValidator", () => {
         });
     });
 
+    describe("multi-license NNU ambiguity", () => {
+        it("warns when INCLUDE lacks license number and NNU product spans multiple licenses", () => {
+            const state = buildState(
+                [
+                    buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU", licenseNumber: "111111" }),
+                    buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU", licenseNumber: "222222" }),
+                ],
+                [buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "jdoe", licenseNumber: "" })],
+            );
+            const results = validate(state);
+            expect(results.some(r =>
+                r.severity === "warning" && r.message.includes("2 licenses") && r.message.includes("MATLAB")
+            )).toBe(true);
+        });
+
+        it("no warning when INCLUDE specifies a license number", () => {
+            const state = buildState(
+                [
+                    buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU", licenseNumber: "111111" }),
+                    buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU", licenseNumber: "222222" }),
+                ],
+                [buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "jdoe", licenseNumber: "111111" })],
+            );
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("2 licenses"))).toHaveLength(0);
+        });
+
+        it("no warning when NNU product exists on only one license", () => {
+            const state = buildState(
+                [buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU", licenseNumber: "111111" })],
+                [buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "jdoe", licenseNumber: "" })],
+            );
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("licenses"))).toHaveLength(0);
+        });
+
+        it("warns per-directive when multiple INCLUDEs lack license numbers", () => {
+            const state = buildState(
+                [
+                    buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU", licenseNumber: "111111" }),
+                    buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU", licenseNumber: "222222" }),
+                ],
+                [
+                    buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice", licenseNumber: "" }),
+                    buildDirective("INCLUDE", { productName: "MATLAB", clientType: "GROUP", clientSpecified: "team", licenseNumber: "" }),
+                ],
+            );
+            const results = validate(state);
+            const ambiguityWarnings = results.filter(r => r.message.includes("2 licenses"));
+            expect(ambiguityWarnings).toHaveLength(2);
+        });
+    });
+
     describe("NNU MAX suggestions", () => {
         it("suggests MAX lines for INCLUDEd USER without MAX", () => {
             const state = buildState(
