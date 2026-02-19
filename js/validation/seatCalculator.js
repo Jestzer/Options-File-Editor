@@ -34,6 +34,22 @@ export function calculate(state) {
         groupMemberCounts[key] = g.members.length;
     }
 
+    // Warn about INCLUDE/RESERVE directives referencing empty GROUPs.
+    const groupDirectiveTypes = ["INCLUDE", "RESERVE"];
+    for (const type of groupDirectiveTypes) {
+        for (const d of doc.getByType(type)) {
+            if (d.clientType !== "GROUP" || !d.clientSpecified) continue;
+            const key = caseSensitive ? d.clientSpecified : d.clientSpecified.toLowerCase();
+            if (key in groupMemberCounts && groupMemberCounts[key] === 0) {
+                results.push({
+                    severity: "warning",
+                    directiveId: d.uid,
+                    message: `GROUP "${d.clientSpecified}" has no members. This ${d.type} line will have no effect.`
+                });
+            }
+        }
+    }
+
     // Process INCLUDE directives.
     for (const d of doc.getByType("INCLUDE")) {
         subtractForDirective(d, seatCounts, groupMemberCounts, caseSensitive, results);
@@ -81,6 +97,25 @@ export function calculate(state) {
                     message: `CN product "${entry.productName}" on license ${entry.licenseNumber}: more users specified than ${entry.originalSeatCount === 1 ? "seat" : "seats"} available. Possible License Manager Error -4.`
                 });
             }
+        }
+    }
+
+    // Check for RESERVE consuming all seats.
+    for (const entry of seatCounts) {
+        if (entry.seatCount !== 0 || entry.subtractingDirectives.length === 0) continue;
+
+        // Check if all subtracting directives are RESERVE type.
+        const allReserve = entry.subtractingDirectives.every(uid => {
+            const d = doc.getById(uid);
+            return d && d.type === "RESERVE";
+        });
+
+        if (allReserve) {
+            results.push({
+                severity: "warning",
+                directiveId: null,
+                message: `All seats for "${entry.productName}" on license ${entry.licenseNumber} have been reserved. No seats remain for other users.`
+            });
         }
     }
 

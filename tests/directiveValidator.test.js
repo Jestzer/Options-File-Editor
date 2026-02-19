@@ -151,4 +151,72 @@ describe("directiveValidator", () => {
             expect(results.some(r => r.severity === "info" && r.message.includes("Parallel Server"))).toBe(true);
         });
     });
+
+    describe("duplicate INCLUDE detection", () => {
+        it("warns on duplicate INCLUDE for same product/clientType/clientSpecified", () => {
+            const state = buildState([], [
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice" }),
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice" }),
+            ]);
+            const results = validate(state);
+            expect(results.some(r => r.severity === "warning" && r.message.includes("Duplicate INCLUDE"))).toBe(true);
+        });
+
+        it("no warning when INCLUDEs differ by user", () => {
+            const state = buildState([], [
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice" }),
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "bob" }),
+            ]);
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("Duplicate"))).toHaveLength(0);
+        });
+
+        it("no warning when INCLUDEs differ by product", () => {
+            const state = buildState([], [
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice" }),
+                buildDirective("INCLUDE", { productName: "SIMULINK", clientType: "USER", clientSpecified: "alice" }),
+            ]);
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("Duplicate"))).toHaveLength(0);
+        });
+    });
+
+    describe("INCLUDE + EXCLUDE conflict", () => {
+        it("warns when same product/clientType/clientSpecified has both INCLUDE and EXCLUDE", () => {
+            const state = buildState([], [
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice" }),
+                buildDirective("EXCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice" }),
+            ]);
+            const results = validate(state);
+            expect(results.some(r => r.severity === "warning" && r.message.includes("EXCLUDE takes priority"))).toBe(true);
+        });
+
+        it("no warning when INCLUDE and EXCLUDE target different users", () => {
+            const state = buildState([], [
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice" }),
+                buildDirective("EXCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "bob" }),
+            ]);
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("EXCLUDE takes priority"))).toHaveLength(0);
+        });
+    });
+
+    describe("INCLUDE_BORROW without INCLUDE", () => {
+        it("warns when INCLUDE_BORROW has no corresponding INCLUDE", () => {
+            const state = buildState([], [
+                buildDirective("INCLUDE_BORROW", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice" }),
+            ]);
+            const results = validate(state);
+            expect(results.some(r => r.severity === "warning" && r.message.includes("INCLUDE_BORROW") && r.message.includes("no INCLUDE"))).toBe(true);
+        });
+
+        it("no warning when INCLUDE exists for the same product", () => {
+            const state = buildState([], [
+                buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice" }),
+                buildDirective("INCLUDE_BORROW", { productName: "MATLAB", clientType: "USER", clientSpecified: "alice" }),
+            ]);
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("no INCLUDE"))).toHaveLength(0);
+        });
+    });
 });

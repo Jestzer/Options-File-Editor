@@ -230,6 +230,70 @@ describe("nnuValidator", () => {
         });
     });
 
+    describe("borrow directives on NNU products", () => {
+        it("warns about INCLUDE_BORROW on NNU product", () => {
+            const state = buildState(
+                [buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU" })],
+                [
+                    buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "jdoe" }),
+                    buildDirective("INCLUDE_BORROW", { productName: "MATLAB", clientType: "USER", clientSpecified: "jdoe" }),
+                ],
+            );
+            const results = validate(state);
+            expect(results.some(r => r.severity === "warning" && r.message.includes("Borrowing") && r.message.includes("INCLUDE_BORROW"))).toBe(true);
+        });
+
+        it("warns about EXCLUDE_BORROW on NNU product", () => {
+            const state = buildState(
+                [buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU" })],
+                [
+                    buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "jdoe" }),
+                    buildDirective("EXCLUDE_BORROW", { productName: "MATLAB", clientType: "USER", clientSpecified: "jdoe" }),
+                ],
+            );
+            const results = validate(state);
+            expect(results.some(r => r.severity === "warning" && r.message.includes("Borrowing") && r.message.includes("EXCLUDE_BORROW"))).toBe(true);
+        });
+
+        it("no borrow warning for non-NNU products", () => {
+            const state = buildState(
+                [buildLicenseProduct({ productName: "MATLAB", licenseOffering: "lo=CN" })],
+                [
+                    buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "jdoe" }),
+                    buildDirective("INCLUDE_BORROW", { productName: "MATLAB", clientType: "USER", clientSpecified: "jdoe" }),
+                ],
+            );
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("Borrowing"))).toHaveLength(0);
+        });
+    });
+
+    describe("mixed NNU and non-NNU", () => {
+        it("informs when same product is both NNU and non-NNU", () => {
+            const state = buildState(
+                [
+                    buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU", licenseNumber: "111111" }),
+                    buildLicenseProduct({ productName: "MATLAB", licenseOffering: "lo=CN", licenseNumber: "222222" }),
+                ],
+                [buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "jdoe" })],
+            );
+            const results = validate(state);
+            expect(results.some(r => r.severity === "info" && r.message.includes("both NNU and non-NNU"))).toBe(true);
+        });
+
+        it("no info when product is only NNU", () => {
+            const state = buildState(
+                [
+                    buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU", licenseNumber: "111111" }),
+                    buildLicenseProduct({ productName: "MATLAB", licenseOffering: "NNU", licenseNumber: "222222" }),
+                ],
+                [buildDirective("INCLUDE", { productName: "MATLAB", clientType: "USER", clientSpecified: "jdoe" })],
+            );
+            const results = validate(state);
+            expect(results.filter(r => r.message.includes("both NNU and non-NNU"))).toHaveLength(0);
+        });
+    });
+
     describe("no license loaded", () => {
         it("returns empty when no license is loaded", () => {
             const state = buildState([], [buildDirective("INCLUDE")]);

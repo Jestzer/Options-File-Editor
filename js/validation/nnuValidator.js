@@ -134,6 +134,54 @@ export function validate(state) {
         }
     }
 
+    // Warn about borrow directives on NNU products (borrowing doesn't apply to NNU).
+    if (hasNnu) {
+        const nnuProductNames = new Set(
+            state.licenseData.products
+                .filter(p => p.licenseOffering === "NNU")
+                .map(p => p.productName.toLowerCase())
+        );
+
+        for (const d of doc.directives) {
+            if (!d.productName) continue;
+            if (!nnuProductNames.has(d.productName.toLowerCase())) continue;
+            if (d.type !== "INCLUDE_BORROW" && d.type !== "EXCLUDE_BORROW") continue;
+
+            results.push({
+                severity: "warning",
+                directiveId: d.uid,
+                message: `Borrowing does not apply to NNU products. This ${d.type} for "${d.productName}" will have no effect.`
+            });
+        }
+    }
+
+    // Inform when a product exists as both NNU and non-NNU across licenses.
+    if (hasNnu) {
+        const productOfferings = new Map();
+        for (const p of state.licenseData.products) {
+            const key = p.productName.toLowerCase();
+            if (!productOfferings.has(key)) {
+                productOfferings.set(key, { name: p.productName, hasNnu: false, hasNonNnu: false });
+            }
+            const entry = productOfferings.get(key);
+            if (p.licenseOffering === "NNU") {
+                entry.hasNnu = true;
+            } else {
+                entry.hasNonNnu = true;
+            }
+        }
+
+        for (const [, entry] of productOfferings) {
+            if (entry.hasNnu && entry.hasNonNnu) {
+                results.push({
+                    severity: "info",
+                    directiveId: null,
+                    message: `"${entry.name}" exists as both NNU and non-NNU across licenses. INCLUDE with USER/GROUP only assigns NNU seats; non-NNU seats are managed separately.`
+                });
+            }
+        }
+    }
+
     // Suggest MAX directives for users INCLUDEd on NNU products.
     if (hasNnu) {
         const nnuProductNames = new Set(

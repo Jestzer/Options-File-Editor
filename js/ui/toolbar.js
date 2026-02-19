@@ -3,6 +3,7 @@ import { parseOptionsFile } from "../parsers/optionsFileParser.js";
 import { downloadOptionsFile } from "../export/optionsFileExporter.js";
 import { showError, showConfirm } from "./modal.js";
 import { resetUidCounter } from "../util/uid.js";
+import { APP_VERSION } from "../version.js";
 
 export function initToolbar(state) {
     const btnNew = document.getElementById("btn-new");
@@ -12,6 +13,12 @@ export function initToolbar(state) {
     const licenseInput = document.getElementById("license-file-input");
     const optionsInput = document.getElementById("options-file-input");
     const chkCaseInsensitive = document.getElementById("chk-case-insensitive");
+
+    // --- Version display ---
+    const versionDisplay = document.getElementById("version-display");
+    if (versionDisplay) {
+        versionDisplay.textContent = `v${APP_VERSION}`;
+    }
 
     // --- New ---
     btnNew.addEventListener("click", async () => {

@@ -9,6 +9,8 @@ export function validate(state) {
         ? new Set(state.licenseData.getProductNames().map(n => n.toLowerCase()))
         : null;
 
+    const expiredProductsWarned = new Set();
+
     for (const directive of state.document.directives) {
         const productName = directive.productName || directive.reserveProductName;
         if (!productName) continue;
@@ -50,6 +52,23 @@ export function validate(state) {
                             message: `Product key "${directive.productKey}" does not exist for product "${productName}" in the license file.`
                         });
                     }
+                }
+            }
+        }
+
+        // Warn about expired products (once per product name).
+        if (state.licenseData.isLoaded && !expiredProductsWarned.has(productName.toLowerCase())) {
+            const entries = state.licenseData.getProductsByName(productName);
+            if (entries.length > 0) {
+                const now = new Date();
+                const allExpired = entries.every(e => e.expirationDate && e.expirationDate < now);
+                if (allExpired) {
+                    expiredProductsWarned.add(productName.toLowerCase());
+                    results.push({
+                        severity: "warning",
+                        directiveId: directive.uid,
+                        message: `"${productName}" has expired in the license file. Directives for this product will have no effect.`
+                    });
                 }
             }
         }

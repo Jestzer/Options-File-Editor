@@ -122,6 +122,52 @@ describe("seatCalculator", () => {
         });
     });
 
+    describe("RESERVE consuming all seats", () => {
+        it("warns when RESERVE takes all seats leaving none for others", () => {
+            const state = buildState(
+                [buildLicenseProduct({ productName: "MATLAB", seatCount: 5, licenseNumber: "111111" })],
+                [buildDirective("RESERVE", { seatCount: 5, productName: "MATLAB" })],
+            );
+            const results = calculate(state);
+            expect(results.some(r => r.severity === "warning" && r.message.includes("All seats") && r.message.includes("reserved"))).toBe(true);
+        });
+
+        it("no warning when RESERVE leaves some seats", () => {
+            const state = buildState(
+                [buildLicenseProduct({ productName: "MATLAB", seatCount: 5, licenseNumber: "111111" })],
+                [buildDirective("RESERVE", { seatCount: 3, productName: "MATLAB" })],
+            );
+            const results = calculate(state);
+            expect(results.filter(r => r.message.includes("reserved"))).toHaveLength(0);
+        });
+    });
+
+    describe("empty GROUP in INCLUDE", () => {
+        it("warns when INCLUDE references a GROUP with 0 members", () => {
+            const state = buildState(
+                [buildLicenseProduct({ productName: "MATLAB", seatCount: 5 })],
+                [
+                    buildDirective("GROUP", { groupName: "empty_team", members: [] }),
+                    buildDirective("INCLUDE", { productName: "MATLAB", clientType: "GROUP", clientSpecified: "empty_team" }),
+                ],
+            );
+            const results = calculate(state);
+            expect(results.some(r => r.severity === "warning" && r.message.includes("no members"))).toBe(true);
+        });
+
+        it("no warning when GROUP has members", () => {
+            const state = buildState(
+                [buildLicenseProduct({ productName: "MATLAB", seatCount: 5 })],
+                [
+                    buildDirective("GROUP", { groupName: "team", members: ["alice", "bob"] }),
+                    buildDirective("INCLUDE", { productName: "MATLAB", clientType: "GROUP", clientSpecified: "team" }),
+                ],
+            );
+            const results = calculate(state);
+            expect(results.filter(r => r.message.includes("no members"))).toHaveLength(0);
+        });
+    });
+
     describe("no license loaded", () => {
         it("returns empty when no license is loaded", () => {
             const state = buildState([], [buildDirective("INCLUDE")]);

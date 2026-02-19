@@ -124,5 +124,58 @@ export function validate(state) {
         }
     }
 
+    // --- Cross-directive checks ---
+
+    // Detect duplicate INCLUDE directives.
+    const includeSeen = new Set();
+    for (const d of state.document.getByType("INCLUDE")) {
+        if (!d.productName || !d.clientType || !d.clientSpecified) continue;
+        const key = `${d.productName}|${d.clientType}|${d.clientSpecified}`;
+        if (includeSeen.has(key)) {
+            results.push({
+                severity: "warning",
+                directiveId: d.uid,
+                message: `Duplicate INCLUDE: "${d.productName}" for ${d.clientType} "${d.clientSpecified}" already exists.`
+            });
+        } else {
+            includeSeen.add(key);
+        }
+    }
+
+    // Detect INCLUDE + EXCLUDE conflicts for the same product/clientType/clientSpecified.
+    const excludeKeys = new Set();
+    for (const d of state.document.getByType("EXCLUDE")) {
+        if (!d.productName || !d.clientType || !d.clientSpecified) continue;
+        excludeKeys.add(`${d.productName}|${d.clientType}|${d.clientSpecified}`);
+    }
+    for (const d of state.document.getByType("INCLUDE")) {
+        if (!d.productName || !d.clientType || !d.clientSpecified) continue;
+        const key = `${d.productName}|${d.clientType}|${d.clientSpecified}`;
+        if (excludeKeys.has(key)) {
+            results.push({
+                severity: "warning",
+                directiveId: d.uid,
+                message: `"${d.productName}" has both INCLUDE and EXCLUDE for ${d.clientType} "${d.clientSpecified}". EXCLUDE takes priority in FlexLM.`
+            });
+        }
+    }
+
+    // Detect INCLUDE_BORROW without a corresponding INCLUDE for the same product.
+    const includeProductNames = new Set(
+        state.document.getByType("INCLUDE")
+            .map(d => d.productName)
+            .filter(Boolean)
+    );
+    for (const d of state.document.getByType("INCLUDE_BORROW")) {
+        if (!d.productName) continue;
+        if (!includeProductNames.has(d.productName)) {
+            results.push({
+                severity: "warning",
+                directiveId: d.uid,
+                message: `INCLUDE_BORROW for "${d.productName}" but no INCLUDE exists for this product. Borrowing requires an active INCLUDE.`
+            });
+        }
+    }
+
     return results;
 }
