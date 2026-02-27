@@ -1,6 +1,41 @@
 import { OptionsDocument } from "../state/OptionsDocument.js";
-import { masterProductsSet } from "../data/masterProductsList.js";
+import { masterProductsSet, masterProductsList } from "../data/masterProductsList.js";
 import { uid } from "../util/uid.js";
+
+function levenshteinDistance(a, b) {
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+    return matrix[b.length][a.length];
+}
+
+function findClosestProduct(input) {
+    let bestMatch = null;
+    let bestDistance = Infinity;
+    const inputLower = input.toLowerCase();
+    for (const product of masterProductsList) {
+        const distance = levenshteinDistance(inputLower, product.toLowerCase());
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            bestMatch = product;
+        }
+    }
+    const threshold = Math.max(3, Math.ceil(input.length * 0.4));
+    return bestDistance <= threshold ? bestMatch : null;
+}
 
 const VALID_CLIENT_TYPES = new Set(["USER", "GROUP", "HOST", "HOST_GROUP", "DISPLAY", "PROJECT", "INTERNET"]);
 const IGNORED_DIRECTIVES = new Set([
@@ -176,9 +211,11 @@ export function parseOptionsFile(rawText) {
 
             // Validate product name against master list.
             if (!masterProductsSet.has(productName)) {
+                const suggestion = findClosestProduct(productName);
+                const suggestionText = suggestion ? ` Did you mean "${suggestion}"?` : "";
                 return {
                     document: null, warnings,
-                    error: `Unknown product "${productName}" on ${type} line. Ensure it matches the INCREMENT line in the license file exactly. Line: "${currentLine}"`
+                    error: `Unknown product "${productName}" on ${type} line. Ensure it matches the INCREMENT line in the license file exactly.${suggestionText} Line: "${currentLine}"`
                 };
             }
 
@@ -423,6 +460,35 @@ export function parseOptionsFile(rawText) {
         if (IGNORED_DIRECTIVES.has(firstWord)) {
             lastGroupDirective = null;
             lastHostGroupDirective = null;
+
+            // Basic syntax validation for TIMEOUTALL, TIMEOUT, and LINGER.
+            const lineParts = trimmed.split(/\s+/).filter(p => p);
+            if (firstWord === "TIMEOUTALL") {
+                if (lineParts.length < 2) {
+                    return { document: null, warnings, error: `TIMEOUTALL line is missing the timeout value (in seconds): "${currentLine}"` };
+                }
+                const value = Number(lineParts[1]);
+                if (!Number.isInteger(value) || value < 0) {
+                    return { document: null, warnings, error: `TIMEOUTALL line has an invalid timeout value. It must be a positive integer (in seconds): "${currentLine}"` };
+                }
+            } else if (firstWord === "TIMEOUT") {
+                if (lineParts.length < 3) {
+                    return { document: null, warnings, error: `TIMEOUT line is missing information. Format: TIMEOUT product seconds. Line: "${currentLine}"` };
+                }
+                const value = Number(lineParts[2]);
+                if (!Number.isInteger(value) || value < 0) {
+                    return { document: null, warnings, error: `TIMEOUT line has an invalid timeout value. It must be a positive integer (in seconds): "${currentLine}"` };
+                }
+            } else if (firstWord === "LINGER") {
+                if (lineParts.length < 3) {
+                    return { document: null, warnings, error: `LINGER line is missing information. Format: LINGER product seconds. Line: "${currentLine}"` };
+                }
+                const value = Number(lineParts[2]);
+                if (!Number.isInteger(value) || value < 0) {
+                    return { document: null, warnings, error: `LINGER line has an invalid linger value. It must be a positive integer (in seconds): "${currentLine}"` };
+                }
+            }
+
             continue;
         }
 

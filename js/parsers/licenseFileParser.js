@@ -361,13 +361,16 @@ export function parseLicenseFile(rawText) {
                 };
             }
 
+            const borrowingEnabled = currentLine.includes("BORROW=");
+
             licenseData.products.push(new LicenseProduct({
                 productName,
                 seatCount,
                 productKey,
                 licenseOffering,
                 licenseNumber,
-                expirationDate
+                expirationDate,
+                borrowingEnabled
             }));
             continue;
         }

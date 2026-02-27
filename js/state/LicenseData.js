@@ -1,5 +1,5 @@
 export class LicenseProduct {
-    constructor({ productName, seatCount, productKey, licenseOffering, licenseNumber, expirationDate }) {
+    constructor({ productName, seatCount, productKey, licenseOffering, licenseNumber, expirationDate, borrowingEnabled }) {
         this.productName = productName;
         this.seatCount = seatCount;
         this.originalSeatCount = seatCount;
@@ -7,6 +7,7 @@ export class LicenseProduct {
         this.licenseOffering = licenseOffering;
         this.licenseNumber = licenseNumber;
         this.expirationDate = expirationDate;
+        this.borrowingEnabled = borrowingEnabled ?? false;
     }
 }
 

@@ -126,19 +126,21 @@ export function validate(state) {
 
     // --- Cross-directive checks ---
 
-    // Detect duplicate INCLUDE directives.
-    const includeSeen = new Set();
-    for (const d of state.document.getByType("INCLUDE")) {
-        if (!d.productName || !d.clientType || !d.clientSpecified) continue;
-        const key = `${d.productName}|${d.licenseNumber || ""}|${d.productKey || ""}|${d.clientType}|${d.clientSpecified}`;
-        if (includeSeen.has(key)) {
-            results.push({
-                severity: "warning",
-                directiveId: d.uid,
-                message: `Duplicate INCLUDE: "${d.productName}" for ${d.clientType} "${d.clientSpecified}" already exists.`
-            });
-        } else {
-            includeSeen.add(key);
+    // Detect duplicate directives (INCLUDE, EXCLUDE, INCLUDE_BORROW, EXCLUDE_BORROW).
+    for (const type of ["INCLUDE", "EXCLUDE", "INCLUDE_BORROW", "EXCLUDE_BORROW"]) {
+        const seen = new Set();
+        for (const d of state.document.getByType(type)) {
+            if (!d.productName || !d.clientType || !d.clientSpecified) continue;
+            const key = `${d.productName}|${d.licenseNumber || ""}|${d.productKey || ""}|${d.clientType}|${d.clientSpecified}`;
+            if (seen.has(key)) {
+                results.push({
+                    severity: "warning",
+                    directiveId: d.uid,
+                    message: `Duplicate ${type}: "${d.productName}" for ${d.clientType} "${d.clientSpecified}" already exists. Each duplicate will separately subtract from the seat count.`
+                });
+            } else {
+                seen.add(key);
+            }
         }
     }
 
@@ -174,6 +176,24 @@ export function validate(state) {
                 directiveId: d.uid,
                 message: `INCLUDE_BORROW for "${d.productName}" but no INCLUDE exists for this product. Borrowing requires an active INCLUDE.`
             });
+        }
+    }
+
+    // Detect INCLUDE_BORROW on products that don't support borrowing (no BORROW= on INCREMENT line).
+    if (state.licenseData.isLoaded) {
+        for (const d of state.document.getByType("INCLUDE_BORROW")) {
+            if (!d.productName) continue;
+            const entries = state.licenseData.getProductsByName(d.productName);
+            if (entries.length > 0) {
+                const anyBorrowEnabled = entries.some(e => e.borrowingEnabled === true);
+                if (!anyBorrowEnabled) {
+                    results.push({
+                        severity: "warning",
+                        directiveId: d.uid,
+                        message: `INCLUDE_BORROW for "${d.productName}", but borrowing is not enabled for this product in the license file (no BORROW= found on its INCREMENT line). This INCLUDE_BORROW will have no effect.`
+                    });
+                }
+            }
         }
     }
 
