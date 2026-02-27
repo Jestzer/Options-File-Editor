@@ -40,6 +40,51 @@ export function parseLicenseFile(rawText) {
         return { licenseData: null, warnings, error: "The license file contains at least one non-MathWorks product." };
     }
 
+    // Pre-scan INCREMENT lines for Individual/Designated Computer indicators
+    // that the text-level checks above do not catch.
+    {
+        const hasTMWArchive = text.includes("TMW_Archive");
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith("INCREMENT")) continue;
+
+            const parts = line.split(" ").filter(p => p.trim());
+            if (parts.length < 7) continue;
+
+            if (parts[1] === "TMW_Archive") continue;
+
+            const seatCount = Number(parts[5]);
+            const productKey = (parts[6] || "").trim();
+
+            // Lines with lo= are already handled by the text-level check above.
+            if (line.includes("lo=")) continue;
+
+            if (line.includes("lr=") || hasTMWArchive || !line.includes("asset_info=")) {
+                if (!(seatCount > 0)) {
+                    // PLP Individual is allowed (handled specially in the main parser).
+                    if (hasTMWArchive && !line.includes("asset_info=")) continue;
+                    return {
+                        licenseData: null, warnings,
+                        error: "The license file contains an Individual or Designated Computer license, which cannot use an options file."
+                    };
+                }
+            } else {
+                if (line.includes("PLATFORMS=x")) {
+                    return {
+                        licenseData: null, warnings,
+                        error: "The license file contains a Designated Computer license generated from a PLP on Windows, which cannot use an options file."
+                    };
+                }
+                if (productKey.length === 20 && !hasTMWArchive) {
+                    return {
+                        licenseData: null, warnings,
+                        error: "The license file contains an Individual or Designated Computer license, which cannot use an options file."
+                    };
+                }
+            }
+        }
+    }
+
     const licenseData = new LicenseData();
     let serverLineCount = 0;
     let daemonLineCount = 0;
