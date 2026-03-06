@@ -15,12 +15,10 @@ export function parseLicenseFile(rawText) {
         return { licenseData: null, warnings, error: "The license file is empty." };
     }
 
-    // Remove line continuations and tabs.
+    // Remove line continuations (backslash + newline, including any intervening blank lines) and tabs.
     let text = rawText
-        .replace(/\\\r\n/g, "")
-        .replace(/\\\n\t/g, "")
-        .replace(/\\\n/g, "")
-        .replace(/\t/g, "");
+        .replace(/\\[ \t]*\r?\n(?:[ \t]*\r?\n)*[ \t]*/g, " ")
+        .replace(/\t/g, " ");
 
     const lines = text.split(/\r\n|\r|\n/);
 
