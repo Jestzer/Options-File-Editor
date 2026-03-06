@@ -210,3 +210,54 @@ body {
     color: var(--text-muted);
     font-size: 13px;
 }
+
+.drag-drop-hint {
+    display: inline-block;
+    margin-top: 8px;
+    color: var(--accent);
+    font-size: 12px;
+}
+
+/* Drag-and-drop overlay */
+.drop-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.drop-overlay.hidden {
+    display: none;
+}
+
+.drop-overlay-content {
+    border: 3px dashed var(--accent);
+    border-radius: 16px;
+    padding: 60px 80px;
+    text-align: center;
+    background: rgba(30, 105, 155, 0.08);
+}
+
+.drop-overlay-icon {
+    width: 56px;
+    height: 56px;
+    color: var(--accent);
+    margin: 0 auto 16px;
+    display: block;
+}
+
+.drop-overlay-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.drop-overlay-subtext {
+    font-size: 14px;
+    color: var(--text-secondary);
+}

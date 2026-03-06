@@ -1,6 +1,7 @@
 import { EditorState } from "./state/EditorState.js";
 import { ValidationEngine } from "./validation/validationEngine.js";
 import { initToolbar } from "./ui/toolbar.js";
+import { initDragDrop } from "./ui/dragDrop.js";
 import { initLicensePanel } from "./ui/licensePanel.js";
 import { initDirectiveList } from "./ui/directiveList.js";
 import { initDirectiveEditor } from "./ui/directiveEditor.js";
@@ -12,6 +13,7 @@ const validationEngine = new ValidationEngine(state);
 
 // --- Initialize UI ---
 initToolbar(state);
+initDragDrop(state);
 initLicensePanel(state);
 
 // Directive editor needs a reference to the list (for clearing selection).
