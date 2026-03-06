@@ -3,6 +3,7 @@ import { parseOptionsFile } from "../parsers/optionsFileParser.js";
 import { downloadOptionsFile } from "../export/optionsFileExporter.js";
 import { showError, showConfirm } from "./modal.js";
 import { resetUidCounter } from "../util/uid.js";
+import { validateTextFile } from "../util/fileValidation.js";
 import { APP_VERSION } from "../version.js";
 
 export function initToolbar(state) {
@@ -36,9 +37,14 @@ export function initToolbar(state) {
         licenseInput.click();
     });
 
-    licenseInput.addEventListener("change", () => {
+    licenseInput.addEventListener("change", async () => {
         const file = licenseInput.files[0];
         if (!file) return;
+
+        if (!await validateTextFile(file)) {
+            showError("The selected file appears to be a binary file (such as a PDF, image, or Word document), not a plain text license file.");
+            return;
+        }
 
         const reader = new FileReader();
         reader.onload = () => {
@@ -61,9 +67,14 @@ export function initToolbar(state) {
         optionsInput.click();
     });
 
-    optionsInput.addEventListener("change", () => {
+    optionsInput.addEventListener("change", async () => {
         const file = optionsInput.files[0];
         if (!file) return;
+
+        if (!await validateTextFile(file)) {
+            showError("The selected file appears to be a binary file (such as a PDF, image, or Word document), not a plain text options file.");
+            return;
+        }
 
         const reader = new FileReader();
         reader.onload = () => {

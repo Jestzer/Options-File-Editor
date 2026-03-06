@@ -1,6 +1,7 @@
 import { parseLicenseFile } from "../parsers/licenseFileParser.js";
 import { parseOptionsFile } from "../parsers/optionsFileParser.js";
 import { showModal, showError } from "./modal.js";
+import { validateTextFile } from "../util/fileValidation.js";
 
 export function initDragDrop(state) {
     const overlay = document.getElementById("drop-overlay");
@@ -79,6 +80,11 @@ function readFileAsText(file) {
 }
 
 async function handleDroppedFile(file, state) {
+    if (!await validateTextFile(file)) {
+        showError(`"${file.name}" appears to be a binary file (such as a PDF, image, or Word document), not a plain text file.`);
+        return;
+    }
+
     let fileType = detectFileTypeFromExtension(file.name);
     const text = await readFileAsText(file);
 
