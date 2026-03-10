@@ -84,16 +84,22 @@ export function calculate(state) {
     // Check for overdraft.
     for (const entry of seatCounts) {
         if (entry.seatCount < 0) {
+            const relatedDirectiveIds = [...entry.subtractingDirectives];
+            const relatedProducts = [`${entry.productName}|${entry.licenseNumber}`];
             if (entry.licenseOffering === "NNU") {
                 results.push({
                     severity: "error",
                     directiveId: null,
+                    relatedDirectiveIds,
+                    relatedProducts,
                     message: `NNU product "${entry.productName}" on license ${entry.licenseNumber}: more users specified (${entry.originalSeatCount - entry.seatCount}) than ${entry.originalSeatCount === 1 ? "seat" : "seats"} available (${entry.originalSeatCount}).`
                 });
             } else if (entry.licenseOffering === "lo=CN") {
                 results.push({
                     severity: "warning",
                     directiveId: null,
+                    relatedDirectiveIds,
+                    relatedProducts,
                     message: `CN product "${entry.productName}" on license ${entry.licenseNumber}: more users specified than ${entry.originalSeatCount === 1 ? "seat" : "seats"} available. Possible License Manager Error -4.`
                 });
             }
@@ -114,6 +120,8 @@ export function calculate(state) {
             results.push({
                 severity: "warning",
                 directiveId: null,
+                relatedDirectiveIds: [...entry.subtractingDirectives],
+                relatedProducts: [`${entry.productName}|${entry.licenseNumber}`],
                 message: `All seats for "${entry.productName}" on license ${entry.licenseNumber} have been reserved. No seats remain for other users.`
             });
         }

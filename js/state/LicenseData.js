@@ -18,6 +18,40 @@ export class LicenseData {
         this.daemonLineHasPort = true;
         this.daemonPortIsCnuFriendly = false;
         this.isLoaded = false;
+        this.rawText = null;
+        this.isModified = false;
+    }
+
+    setServerPort(port) {
+        if (!this.rawText) return;
+        const lines = this.rawText.split(/(\r\n|\r|\n)/);
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].trim().startsWith("SERVER")) {
+                const parts = lines[i].split(" ").filter(p => p.trim());
+                if (parts.length === 3) {
+                    lines[i] = lines[i].trimEnd() + " " + port;
+                }
+            }
+        }
+        this.rawText = lines.join("");
+        this.serverLineHasPort = true;
+        this.isModified = true;
+    }
+
+    setDaemonPort(port) {
+        if (!this.rawText) return;
+        const lines = this.rawText.split(/(\r\n|\r|\n)/);
+        for (let i = 0; i < lines.length; i++) {
+            const trimmed = lines[i].trim();
+            if (trimmed.startsWith("DAEMON") || trimmed.startsWith("VENDOR")) {
+                if (!lines[i].toLowerCase().includes("port=")) {
+                    lines[i] = lines[i].trimEnd() + " port=" + port;
+                }
+            }
+        }
+        this.rawText = lines.join("");
+        this.daemonLineHasPort = true;
+        this.isModified = true;
     }
 
     getProductNames() {

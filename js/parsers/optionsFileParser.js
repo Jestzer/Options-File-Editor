@@ -130,6 +130,30 @@ function validateClientType(clientType) {
 }
 
 /**
+ * When an invalid client type is detected, check if the user may have used spaces
+ * instead of underscores in the product name. Scans forward for a valid client type;
+ * if found, the tokens in between are likely a multi-word product name.
+ */
+function detectSpacedProductName(lineParts, productStartIndex, clientTypeIndex) {
+    for (let k = clientTypeIndex; k < lineParts.length; k++) {
+        if (validateClientType(lineParts[k])) {
+            const spacedName = lineParts.slice(productStartIndex, k).join(" ");
+            const underscoredName = lineParts.slice(productStartIndex, k).join("_");
+            const suggestion = findClosestProduct(underscoredName);
+            return {
+                detected: true,
+                spacedName,
+                underscoredName,
+                suggestion,
+                clientType: lineParts[k],
+                clientSpecified: lineParts.slice(k + 1).join(" ").trimEnd().replace(/"/g, "")
+            };
+        }
+    }
+    return { detected: false };
+}
+
+/**
  * Parse a FlexLM options file (.opt) into an OptionsDocument.
  * Returns { document, warnings, error }.
  */
@@ -200,6 +224,17 @@ export function parseOptionsFile(rawText) {
             let clientSpecified = lineParts.slice(nextIndex + 1).join(" ").trimEnd().replace(/"/g, "");
 
             if (!clientType || !validateClientType(clientType)) {
+                const spaced = detectSpacedProductName(lineParts, 1, nextIndex);
+                if (spaced.detected) {
+                    const fixedName = spaced.suggestion || spaced.underscoredName;
+                    warnings.push(`Corrected spaced product name "${spaced.spacedName}" to "${fixedName}" on ${type} line.`);
+                    directives.push({
+                        uid: uid(), type, productName: fixedName,
+                        licenseNumber, productKey,
+                        clientType: spaced.clientType, clientSpecified: spaced.clientSpecified
+                    });
+                    continue;
+                }
                 return {
                     document: null, warnings,
                     error: `Invalid client type "${clientType || "(empty)"}" on ${type} line: "${currentLine}"`
@@ -209,14 +244,11 @@ export function parseOptionsFile(rawText) {
                 return { document: null, warnings, error: `No ${clientType} specified on ${type} line: "${currentLine}"` };
             }
 
-            // Validate product name against master list.
+            // Flag unrecognized products as warnings (the validation panel handles detailed errors).
             if (!masterProductsSet.has(productName)) {
                 const suggestion = findClosestProduct(productName);
                 const suggestionText = suggestion ? ` Did you mean "${suggestion}"?` : "";
-                return {
-                    document: null, warnings,
-                    error: `Unknown product "${productName}" on ${type} line. Ensure it matches the INCREMENT line in the license file exactly.${suggestionText} Line: "${currentLine}"`
-                };
+                warnings.push(`Unknown product "${productName}" on ${type} line.${suggestionText}`);
             }
 
             // Check for wildcards and IP addresses.
@@ -298,6 +330,24 @@ export function parseOptionsFile(rawText) {
                 return { document: null, warnings, error: `Invalid seat count on MAX line: "${currentLine}"` };
             }
 
+            if (!clientType || !validateClientType(clientType)) {
+                const spaced = detectSpacedProductName(lineParts, 2, 3);
+                if (spaced.detected) {
+                    const fixedName = spaced.suggestion || spaced.underscoredName;
+                    warnings.push(`Corrected spaced product name "${spaced.spacedName}" to "${fixedName}" on MAX line.`);
+                    directives.push({
+                        uid: uid(), type: "MAX", maxSeats,
+                        productName: fixedName,
+                        clientType: spaced.clientType, clientSpecified: spaced.clientSpecified
+                    });
+                    continue;
+                }
+                return {
+                    document: null, warnings,
+                    error: `Invalid client type "${clientType || "(empty)"}" on MAX line: "${currentLine}"`
+                };
+            }
+
             if (clientSpecified.includes("*")) {
                 warnings.push(`Wildcard used in MAX line: "${currentLine}"`);
             }
@@ -347,7 +397,21 @@ export function parseOptionsFile(rawText) {
             let clientSpecified = lineParts.slice(nextIndex + 1).join(" ").trimEnd().replace(/"/g, "");
 
             if (!clientType || !validateClientType(clientType)) {
-                return { document: null, warnings, error: `Invalid client type "${clientType || "(empty)"}" on RESERVE line: "${currentLine}"` };
+                const spaced = detectSpacedProductName(lineParts, 2, nextIndex);
+                if (spaced.detected) {
+                    const fixedName = spaced.suggestion || spaced.underscoredName;
+                    warnings.push(`Corrected spaced product name "${spaced.spacedName}" to "${fixedName}" on RESERVE line.`);
+                    directives.push({
+                        uid: uid(), type: "RESERVE", seatCount,
+                        productName: fixedName, licenseNumber, productKey,
+                        clientType: spaced.clientType, clientSpecified: spaced.clientSpecified
+                    });
+                    continue;
+                }
+                return {
+                    document: null, warnings,
+                    error: `Invalid client type "${clientType || "(empty)"}" on RESERVE line: "${currentLine}"`
+                };
             }
             if (!clientSpecified || !clientSpecified.trim()) {
                 return { document: null, warnings, error: `No ${clientType} specified on RESERVE line: "${currentLine}"` };
@@ -447,6 +511,14 @@ export function parseOptionsFile(rawText) {
             continue;
         }
 
+        // --- USERCASEINSENSITIVE (not a real directive) ---
+        if (trimmed.startsWith("USERCASEINSENSITIVE")) {
+            lastGroupDirective = null;
+            lastHostGroupDirective = null;
+            directives.push({ uid: uid(), type: "USERCASEINSENSITIVE" });
+            continue;
+        }
+
         // --- GROUPCASEINSENSITIVE ---
         if (trimmed.startsWith("GROUPCASEINSENSITIVE ON")) {
             lastGroupDirective = null;
@@ -535,10 +607,10 @@ export function parseOptionsFile(rawText) {
         }
 
         // --- Unrecognized line ---
-        return {
-            document: null, warnings,
-            error: `Unrecognized option line: "${currentLine}". Check for typos.`
-        };
+        lastGroupDirective = null;
+        lastHostGroupDirective = null;
+        directives.push({ uid: uid(), type: "UNKNOWN", rawLine: trimmed });
+        continue;
     }
 
     doc.replaceAll(directives);

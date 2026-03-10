@@ -21,6 +21,32 @@ export function initLicensePanel(state) {
     state.on("seat-summary-updated", (summary) => {
         renderSeatSummary(summary, seatSummaryEl, seatSummaryHeader);
     });
+
+    state.on("spotlight-products", (productKeys) => {
+        for (const el of productsEl.querySelectorAll(".product-entry.spotlighted")) {
+            el.classList.remove("spotlighted");
+        }
+        for (const el of seatSummaryEl.querySelectorAll(".spotlighted")) {
+            el.classList.remove("spotlighted");
+        }
+
+        if (!productKeys || productKeys.length === 0) return;
+
+        const productNames = new Set(productKeys.map(k => k.split("|")[0]));
+        const keySet = new Set(productKeys);
+
+        for (const el of productsEl.querySelectorAll(".product-entry")) {
+            if (productNames.has(el.dataset.productName)) {
+                el.classList.add("spotlighted");
+            }
+        }
+
+        for (const el of seatSummaryEl.querySelectorAll(".seat-summary-wrapper")) {
+            if (keySet.has(el.dataset.productKey)) {
+                el.classList.add("spotlighted");
+            }
+        }
+    });
 }
 
 function renderProducts(licenseData, container) {
@@ -41,6 +67,7 @@ function renderProducts(licenseData, container) {
     for (const [name, entries] of Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]))) {
         const div = document.createElement("div");
         div.className = "product-entry";
+        div.dataset.productName = name;
 
         const nameSpan = document.createElement("div");
         nameSpan.className = "product-name";
@@ -93,7 +120,9 @@ function renderSeatSummary(summary, container, header) {
         barOuter.appendChild(barFill);
 
         const wrapper = document.createElement("div");
+        wrapper.className = "seat-summary-wrapper";
         wrapper.style.width = "100%";
+        wrapper.dataset.productKey = key;
         wrapper.appendChild(div);
         wrapper.appendChild(barOuter);
         container.appendChild(wrapper);

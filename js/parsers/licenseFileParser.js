@@ -453,5 +453,6 @@ export function parseLicenseFile(rawText) {
     }
 
     licenseData.isLoaded = true;
+    licenseData.rawText = rawText;
     return { licenseData, warnings, error: null };
 }

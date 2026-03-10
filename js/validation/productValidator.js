@@ -55,11 +55,17 @@ export function validate(state) {
         if (!masterProductsSet.has(productName)) {
             const suggestion = findClosestProduct(productName);
             const suggestionText = suggestion ? ` Did you mean "${suggestion}"?` : "";
-            results.push({
+            const result = {
                 severity: "error",
                 directiveId: directive.uid,
                 message: `"${productName}" is not a recognized MathWorks product.${suggestionText}`
-            });
+            };
+            if (suggestion) {
+                result.enteredProduct = productName;
+                result.suggestedProduct = suggestion;
+                result.action = { label: "Rename", type: "update", targetId: directive.uid, changes: { productName: suggestion } };
+            }
+            results.push(result);
         } else if (licenseProductNames && !licenseProductNames.has(productName.toLowerCase())) {
             results.push({
                 severity: "error",

@@ -55,6 +55,7 @@ export function validate(state) {
         results.push({
             severity: "info",
             directiveId: null,
+            relatedDirectiveIds: [...doc.getGroups(), ...doc.getHostGroups()].map(d => d.uid),
             message: "Case sensitivity is enabled for GROUPs and HOST_GROUPs. Add GROUPCASEINSENSITIVE ON to disable."
         });
     }

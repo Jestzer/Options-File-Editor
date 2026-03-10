@@ -76,3 +76,14 @@
 .btn-suggestion-action:hover {
     background: #5a5;
 }
+
+.validation-item.active {
+    outline: 1px solid rgba(255, 255, 255, 0.3);
+    filter: brightness(1.15);
+}
+
+.diff-highlight {
+    font-weight: 700;
+    text-decoration: underline;
+    color: #fff;
+}

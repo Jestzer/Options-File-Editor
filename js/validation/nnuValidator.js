@@ -29,6 +29,7 @@ export function validate(state) {
                 results.push({
                     severity: "error",
                     directiveId: null,
+                    relatedDirectiveIds: includes.map(d => d.uid),
                     message: "NNU-only license: at least one INCLUDE line must use USER or GROUP client type."
                 });
             }
@@ -67,6 +68,9 @@ export function validate(state) {
                 results.push({
                     severity: "warning",
                     directiveId: null,
+                    relatedProducts: state.licenseData.products
+                        .filter(p => p.licenseOffering === "NNU" && p.productName === nnuProduct)
+                        .map(p => `${p.productName}|${p.licenseNumber}`),
                     message: `NNU product "${nnuProduct}" has no seats assigned. NNU products require INCLUDE lines with USER(s) or GROUP(s) to use the product(s).`
                 });
             }
@@ -171,11 +175,14 @@ export function validate(state) {
             }
         }
 
-        for (const [, entry] of productOfferings) {
+        for (const [key, entry] of productOfferings) {
             if (entry.hasNnu && entry.hasNonNnu) {
                 results.push({
                     severity: "info",
                     directiveId: null,
+                    relatedProducts: state.licenseData.products
+                        .filter(p => p.productName.toLowerCase() === key)
+                        .map(p => `${p.productName}|${p.licenseNumber}`),
                     message: `"${entry.name}" exists as both NNU and non-NNU across licenses. INCLUDE with USER/GROUP only assigns NNU seats; non-NNU seats are managed separately.`
                 });
             }
@@ -194,6 +201,7 @@ export function validate(state) {
         const existingMaxDirectives = doc.getByType("MAX");
         const groups = doc.getGroups();
         const missingMaxDirectives = [];
+        const relatedIncludeIds = [];
 
         for (const d of includes) {
             if (!d.productName || !nnuProductNames.has(d.productName)) continue;
@@ -218,12 +226,14 @@ export function validate(state) {
                         clientType: "USER",
                         clientSpecified: d.clientSpecified
                     });
+                    if (!relatedIncludeIds.includes(d.uid)) relatedIncludeIds.push(d.uid);
                 }
             } else if (d.clientType === "GROUP") {
                 // Find the group and check each member.
                 const group = groups.find(g => g.groupName === d.clientSpecified);
                 if (!group || !group.members) continue;
 
+                let groupHasMissing = false;
                 for (const member of group.members) {
                     const hasMax = existingMaxDirectives.some(m =>
                         m.productName === d.productName &&
@@ -232,6 +242,7 @@ export function validate(state) {
                     );
 
                     if (!hasMax) {
+                        groupHasMissing = true;
                         // Avoid duplicates in the suggestion list.
                         const alreadySuggested = missingMaxDirectives.some(m =>
                             m.productName === d.productName &&
@@ -249,6 +260,9 @@ export function validate(state) {
                         }
                     }
                 }
+                if (groupHasMissing && !relatedIncludeIds.includes(d.uid)) {
+                    relatedIncludeIds.push(d.uid);
+                }
             }
         }
 
@@ -257,6 +271,7 @@ export function validate(state) {
             results.push({
                 severity: "suggestion",
                 directiveId: null,
+                relatedDirectiveIds: relatedIncludeIds,
                 message: `NNU: ${missingMaxDirectives.length} ${userWord} across NNU products are missing MAX seat limits. Adding MAX lines prevents users from hogging seats.`,
                 action: {
                     label: "Add MAX lines",

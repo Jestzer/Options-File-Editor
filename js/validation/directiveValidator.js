@@ -12,6 +12,28 @@ export function validate(state) {
     const results = [];
 
     for (const d of state.document.directives) {
+        // Unrecognized / gibberish lines.
+        if (d.type === "UNKNOWN") {
+            results.push({
+                severity: "error",
+                directiveId: d.uid,
+                message: `Unrecognized line: "${d.rawLine}". This is not a valid options file directive.`,
+                action: { label: "Remove line", type: "remove", targetId: d.uid }
+            });
+            continue;
+        }
+
+        // USERCASEINSENSITIVE is not a real FlexNet directive.
+        if (d.type === "USERCASEINSENSITIVE") {
+            results.push({
+                severity: "error",
+                directiveId: d.uid,
+                message: `"USERCASEINSENSITIVE" is not a recognized FlexNet directive. Did you mean "GROUPCASEINSENSITIVE ON"? Note: users must be defined in a GROUP for case-insensitive matching to take effect.`,
+                action: { label: "Replace with GROUPCASEINSENSITIVE ON", type: "replace", targetId: d.uid, replacement: { type: "GROUPCASEINSENSITIVE" } }
+            });
+            continue;
+        }
+
         // Product name required for product-specific directives.
         if (PRODUCT_DIRECTIVE_TYPES.has(d.type)) {
             const name = d.productName;
@@ -136,7 +158,8 @@ export function validate(state) {
                 results.push({
                     severity: "warning",
                     directiveId: d.uid,
-                    message: `Duplicate ${type}: "${d.productName}" for ${d.clientType} "${d.clientSpecified}" already exists. Each duplicate will separately subtract from the seat count.`
+                    message: `Duplicate ${type}: "${d.productName}" for ${d.clientType} "${d.clientSpecified}" already exists. Each duplicate will separately subtract from the seat count.`,
+                    action: { label: "Remove duplicate", type: "remove", targetId: d.uid }
                 });
             } else {
                 seen.add(key);

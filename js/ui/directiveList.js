@@ -12,13 +12,17 @@ const TYPE_BADGES = {
     GROUP: "badge-group",
     HOST_GROUP: "badge-hostgroup",
     COMMENT: "badge-comment",
-    GROUPCASEINSENSITIVE: "badge-groupcaseinsensitive"
+    GROUPCASEINSENSITIVE: "badge-groupcaseinsensitive",
+    UNKNOWN: "badge-unknown",
+    USERCASEINSENSITIVE: "badge-unknown"
 };
 
 export function initDirectiveList(state, { onSelectDirective }) {
     const listEl = document.getElementById("directive-list");
     const addBtn = document.getElementById("btn-add-directive");
     let selectedId = null;
+    let spotlightedIds = new Set();
+    let spotlightSeverity = null;
 
     function render() {
         const directives = state.document.directives;
@@ -44,6 +48,13 @@ export function initDirectiveList(state, { onSelectDirective }) {
             if (d.uid === selectedId) row.classList.add("selected");
             if (errorIds.has(d.uid)) row.classList.add("has-error");
             else if (warningIds.has(d.uid)) row.classList.add("has-warning");
+            if (spotlightedIds.has(d.uid)) {
+                if (spotlightSeverity) {
+                    row.classList.add(`spotlight-${spotlightSeverity}`);
+                } else {
+                    row.classList.add("spotlighted");
+                }
+            }
             row.dataset.uid = d.uid;
 
             // Type badge.
@@ -106,6 +117,9 @@ export function initDirectiveList(state, { onSelectDirective }) {
             // Click to select/edit.
             row.addEventListener("click", () => {
                 selectedId = d.uid;
+                spotlightedIds.clear();
+                spotlightSeverity = null;
+                state.emit("spotlight-products", null);
                 onSelectDirective(d);
                 render();
             });
@@ -121,16 +135,32 @@ export function initDirectiveList(state, { onSelectDirective }) {
     });
 
     state.on("document-changed", render);
-    state.on("validation-complete", render);
+    state.on("validation-complete", () => {
+        spotlightedIds.clear();
+        spotlightSeverity = null;
+        render();
+    });
 
     return {
         render,
         selectDirective(uid) {
             selectedId = uid;
+            spotlightedIds.clear();
+            spotlightSeverity = null;
             render();
         },
         clearSelection() {
             selectedId = null;
+            render();
+        },
+        spotlightDirectives(uids, severity) {
+            spotlightedIds = new Set(uids || []);
+            spotlightSeverity = severity || null;
+            render();
+        },
+        clearSpotlight() {
+            spotlightedIds.clear();
+            spotlightSeverity = null;
             render();
         }
     };
@@ -162,6 +192,10 @@ function directiveSummaryText(d) {
             return d.text;
         case "GROUPCASEINSENSITIVE":
             return "ON";
+        case "UNKNOWN":
+            return d.rawLine;
+        case "USERCASEINSENSITIVE":
+            return "(Not a valid FlexNet directive)";
         default:
             return "";
     }

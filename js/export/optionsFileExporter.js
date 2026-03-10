@@ -44,6 +44,12 @@ function directiveToLine(d) {
         case "COMMENT":
             return `# ${d.text}`;
 
+        case "UNKNOWN":
+            return d.rawLine;
+
+        case "USERCASEINSENSITIVE":
+            return "USERCASEINSENSITIVE ON";
+
         default:
             return null;
     }

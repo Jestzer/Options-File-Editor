@@ -34,6 +34,36 @@ export function initDirectiveEditor(state, options) {
         const isNew = directive === "new";
         editingUid = isNew ? null : directive?.uid || null;
 
+        // Read-only view for non-editable directive types.
+        if (!isNew && (directive.type === "UNKNOWN" || directive.type === "USERCASEINSENSITIVE")) {
+            container.innerHTML = "";
+            const info = document.createElement("div");
+            info.className = "form-group";
+            const label = document.createElement("label");
+            label.textContent = directive.type === "UNKNOWN" ? "Unrecognized Line" : "Invalid Directive";
+            info.appendChild(label);
+            const display = document.createElement("div");
+            display.className = "form-control";
+            display.style.background = "var(--error-bg, #3a2020)";
+            display.style.borderColor = "var(--error, #e57373)";
+            display.textContent = directive.type === "UNKNOWN"
+                ? directive.rawLine
+                : "USERCASEINSENSITIVE is not a valid FlexNet directive. Use GROUPCASEINSENSITIVE ON instead.";
+            info.appendChild(display);
+            container.appendChild(info);
+            const delBtn = document.createElement("button");
+            delBtn.className = "btn btn-danger";
+            delBtn.textContent = "Delete this line";
+            delBtn.style.marginTop = "12px";
+            delBtn.addEventListener("click", () => {
+                state.document.remove(directive.uid);
+                showEmpty();
+                options.directiveList.clearSelection();
+            });
+            container.appendChild(delBtn);
+            return;
+        }
+
         const currentType = isNew ? "" : directive.type;
 
         container.innerHTML = "";

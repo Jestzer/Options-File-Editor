@@ -1,6 +1,7 @@
 import { parseLicenseFile } from "../parsers/licenseFileParser.js";
 import { parseOptionsFile } from "../parsers/optionsFileParser.js";
 import { downloadOptionsFile } from "../export/optionsFileExporter.js";
+import { downloadLicenseFile } from "../export/licenseFileExporter.js";
 import { showError, showConfirm } from "./modal.js";
 import { resetUidCounter } from "../util/uid.js";
 import { validateTextFile } from "../util/fileValidation.js";
@@ -11,6 +12,7 @@ export function initToolbar(state) {
     const btnLoadLicense = document.getElementById("btn-load-license");
     const btnLoadOptions = document.getElementById("btn-load-options");
     const btnExport = document.getElementById("btn-export");
+    const btnExportLicense = document.getElementById("btn-export-license");
     const licenseInput = document.getElementById("license-file-input");
     const optionsInput = document.getElementById("options-file-input");
     const chkCaseInsensitive = document.getElementById("chk-case-insensitive");
@@ -101,6 +103,15 @@ export function initToolbar(state) {
     // Enable export button when there are directives.
     state.on("document-changed", () => {
         btnExport.disabled = state.document.length === 0;
+    });
+
+    // --- Export License ---
+    btnExportLicense.addEventListener("click", () => {
+        downloadLicenseFile(state.licenseData);
+    });
+
+    state.on("license-loaded", () => {
+        btnExportLicense.disabled = !state.licenseData.isModified;
     });
 
     // --- GROUPCASEINSENSITIVE toggle ---

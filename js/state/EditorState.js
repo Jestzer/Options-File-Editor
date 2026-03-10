@@ -29,6 +29,15 @@ export class EditorState {
         this.emit("license-loaded", licenseData);
     }
 
+    fixLicensePort(fixType, value) {
+        if (fixType === "server-port") {
+            this.licenseData.setServerPort(value);
+        } else if (fixType === "daemon-port") {
+            this.licenseData.setDaemonPort(value);
+        }
+        this.emit("license-loaded", this.licenseData);
+    }
+
     setValidationResults(results) {
         this.validationResults = results;
         this.emit("validation-complete", results);

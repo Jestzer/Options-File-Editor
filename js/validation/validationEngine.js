@@ -3,6 +3,7 @@ import * as directiveValidator from "./directiveValidator.js";
 import * as groupValidator from "./groupValidator.js";
 import * as seatCalculator from "./seatCalculator.js";
 import * as nnuValidator from "./nnuValidator.js";
+import * as licenseValidator from "./licenseValidator.js";
 
 export class ValidationEngine {
     constructor(editorState) {
@@ -25,7 +26,8 @@ export class ValidationEngine {
             ...directiveValidator.validate(this.state),
             ...groupValidator.validate(this.state),
             ...seatCalculator.calculate(this.state),
-            ...nnuValidator.validate(this.state)
+            ...nnuValidator.validate(this.state),
+            ...licenseValidator.validate(this.state)
         ];
 
         this.state.setValidationResults(results);
