@@ -40,7 +40,8 @@ function findClosestProduct(input) {
 const VALID_CLIENT_TYPES = new Set(["USER", "GROUP", "HOST", "HOST_GROUP", "DISPLAY", "PROJECT", "INTERNET"]);
 const IGNORED_DIRECTIVES = new Set([
     "TIMEOUTALL", "DEBUGLOG", "LINGER", "MAX_OVERDRAFT", "REPORTLOG",
-    "TIMEOUT", "BORROW", "NOLOG", "DEFAULT", "HIDDEN", "MAX_BORROW_HOURS", "BORROW_LOWWATER"
+    "TIMEOUT", "BORROW", "NOLOG", "DEFAULT", "HIDDEN", "MAX_BORROW_HOURS", "BORROW_LOWWATER",
+    "AUTOMATIC_REREAD"
 ]);
 
 /**
@@ -552,6 +553,9 @@ export function parseOptionsFile(rawText, friendlyNameMap = null) {
                 if (!Number.isInteger(value) || value < 0) {
                     return { document: null, warnings, error: `TIMEOUTALL line has an invalid timeout value. It must be a positive integer (in seconds): "${currentLine}"` };
                 }
+                if (value > 0 && value < 14400) {
+                    warnings.push(`TIMEOUTALL value of ${value} seconds is below the minimum of 14400 seconds (4 hours) accepted by most MathWorks products. CNU products accept a minimum of 3600 seconds (1 hour).`);
+                }
             } else if (firstWord === "TIMEOUT") {
                 if (lineParts.length < 3) {
                     return { document: null, warnings, error: `TIMEOUT line is missing information. Format: TIMEOUT product seconds. Line: "${currentLine}"` };
@@ -559,6 +563,11 @@ export function parseOptionsFile(rawText, friendlyNameMap = null) {
                 const value = Number(lineParts[2]);
                 if (!Number.isInteger(value) || value < 0) {
                     return { document: null, warnings, error: `TIMEOUT line has an invalid timeout value. It must be a positive integer (in seconds): "${currentLine}"` };
+                }
+                if (value > 0 && value < 3600) {
+                    warnings.push(`TIMEOUT value of ${value} seconds for "${lineParts[1]}" is below the minimum of 3600 seconds (1 hour) accepted by any MathWorks product. The minimum is 14400 seconds (4 hours) for non-CNU products.`);
+                } else if (value >= 3600 && value < 14400) {
+                    warnings.push(`TIMEOUT value of ${value} seconds for "${lineParts[1]}" is below the minimum of 14400 seconds (4 hours) accepted by most MathWorks products. Only CNU products accept a minimum of 3600 seconds (1 hour).`);
                 }
             } else if (firstWord === "LINGER") {
                 if (lineParts.length < 3) {

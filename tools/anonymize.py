@@ -170,6 +170,7 @@ def anonymize_options_file(text, mapping):
         "GROUP", "HOST_GROUP",
         "GROUPCASEINSENSITIVE", "USERCASEINSENSITIVE",
         "TIMEOUT", "LINGER", "BORROW", "NOLOG", "DEBUGLOG", "REPORTLOG",
+        "AUTOMATIC_REREAD", "TIMEOUTALL",
     }
 
     for line in lines:
