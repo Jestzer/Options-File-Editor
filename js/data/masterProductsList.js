@@ -16,6 +16,7 @@ export const masterProductsList = [
     "Curve_Fitting_Toolbox",
     "Data_Acq_Toolbox",
     "Database_Toolbox",
+    "Datafeed_Toolbox",
     "DDS_Blockset",
     "Deep_Learning_HDL_Toolbox",
     "Dial_and_Gauge_Blocks",

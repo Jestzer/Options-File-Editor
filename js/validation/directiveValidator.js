@@ -25,12 +25,21 @@ export function validate(state) {
 
         // USERCASEINSENSITIVE is not a real FlexNet directive.
         if (d.type === "USERCASEINSENSITIVE") {
-            results.push({
-                severity: "error",
-                directiveId: d.uid,
-                message: `"USERCASEINSENSITIVE" is not a recognized FlexNet directive. Did you mean "GROUPCASEINSENSITIVE ON"? Note: users must be defined in a GROUP for case-insensitive matching to take effect.`,
-                action: { label: "Replace with GROUPCASEINSENSITIVE ON", type: "replace", targetId: d.uid, replacement: { type: "GROUPCASEINSENSITIVE" } }
-            });
+            if (state.document.hasGroupCaseInsensitive()) {
+                results.push({
+                    severity: "error",
+                    directiveId: d.uid,
+                    message: `"USERCASEINSENSITIVE" is not a recognized FlexNet directive. GROUPCASEINSENSITIVE ON is already present, so this line can be removed.`,
+                    action: { label: "Remove line", type: "remove", targetId: d.uid }
+                });
+            } else {
+                results.push({
+                    severity: "error",
+                    directiveId: d.uid,
+                    message: `"USERCASEINSENSITIVE" is not a recognized FlexNet directive. Did you mean "GROUPCASEINSENSITIVE ON"? Note: users must be defined in a GROUP for case-insensitive matching to take effect.`,
+                    action: { label: "Replace with GROUPCASEINSENSITIVE ON", type: "replace", targetId: d.uid, replacement: { type: "GROUPCASEINSENSITIVE" } }
+                });
+            }
             continue;
         }
 

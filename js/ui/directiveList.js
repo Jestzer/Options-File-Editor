@@ -37,9 +37,13 @@ export function initDirectiveList(state, { onSelectDirective }) {
         const errorIds = new Set();
         const warningIds = new Set();
         for (const r of state.validationResults) {
-            if (!r.directiveId) continue;
-            if (r.severity === "error") errorIds.add(r.directiveId);
-            else if (r.severity === "warning") warningIds.add(r.directiveId);
+            const ids = [];
+            if (r.directiveId) ids.push(r.directiveId);
+            if (r.relatedDirectiveIds) ids.push(...r.relatedDirectiveIds);
+            for (const id of ids) {
+                if (r.severity === "error") errorIds.add(id);
+                else if (r.severity === "warning") warningIds.add(id);
+            }
         }
 
         for (const d of directives) {

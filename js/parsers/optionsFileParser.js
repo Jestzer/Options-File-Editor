@@ -134,12 +134,21 @@ function validateClientType(clientType) {
  * instead of underscores in the product name. Scans forward for a valid client type;
  * if found, the tokens in between are likely a multi-word product name.
  */
-function detectSpacedProductName(lineParts, productStartIndex, clientTypeIndex) {
+function findSuggestion(input, friendlyNameMap) {
+    if (friendlyNameMap) {
+        const key = input.toLowerCase().replace(/ /g, "_");
+        const flexName = friendlyNameMap.get(key);
+        if (flexName) return flexName;
+    }
+    return findClosestProduct(input);
+}
+
+function detectSpacedProductName(lineParts, productStartIndex, clientTypeIndex, friendlyNameMap) {
     for (let k = clientTypeIndex; k < lineParts.length; k++) {
         if (validateClientType(lineParts[k])) {
             const spacedName = lineParts.slice(productStartIndex, k).join(" ");
             const underscoredName = lineParts.slice(productStartIndex, k).join("_");
-            const suggestion = findClosestProduct(underscoredName);
+            const suggestion = findSuggestion(underscoredName, friendlyNameMap);
             return {
                 detected: true,
                 spacedName,
@@ -157,7 +166,7 @@ function detectSpacedProductName(lineParts, productStartIndex, clientTypeIndex) 
  * Parse a FlexLM options file (.opt) into an OptionsDocument.
  * Returns { document, warnings, error }.
  */
-export function parseOptionsFile(rawText) {
+export function parseOptionsFile(rawText, friendlyNameMap = null) {
     const warnings = [];
 
     if (!rawText || !rawText.trim()) {
@@ -224,7 +233,7 @@ export function parseOptionsFile(rawText) {
             let clientSpecified = lineParts.slice(nextIndex + 1).join(" ").trimEnd().replace(/"/g, "");
 
             if (!clientType || !validateClientType(clientType)) {
-                const spaced = detectSpacedProductName(lineParts, 1, nextIndex);
+                const spaced = detectSpacedProductName(lineParts, 1, nextIndex, friendlyNameMap);
                 if (spaced.detected) {
                     const fixedName = spaced.suggestion || spaced.underscoredName;
                     warnings.push(`Corrected spaced product name "${spaced.spacedName}" to "${fixedName}" on ${type} line.`);
@@ -246,7 +255,7 @@ export function parseOptionsFile(rawText) {
 
             // Flag unrecognized products as warnings (the validation panel handles detailed errors).
             if (!masterProductsSet.has(productName)) {
-                const suggestion = findClosestProduct(productName);
+                const suggestion = findSuggestion(productName, friendlyNameMap);
                 const suggestionText = suggestion ? ` Did you mean "${suggestion}"?` : "";
                 warnings.push(`Unknown product "${productName}" on ${type} line.${suggestionText}`);
             }
@@ -331,7 +340,7 @@ export function parseOptionsFile(rawText) {
             }
 
             if (!clientType || !validateClientType(clientType)) {
-                const spaced = detectSpacedProductName(lineParts, 2, 3);
+                const spaced = detectSpacedProductName(lineParts, 2, 3, friendlyNameMap);
                 if (spaced.detected) {
                     const fixedName = spaced.suggestion || spaced.underscoredName;
                     warnings.push(`Corrected spaced product name "${spaced.spacedName}" to "${fixedName}" on MAX line.`);
@@ -397,7 +406,7 @@ export function parseOptionsFile(rawText) {
             let clientSpecified = lineParts.slice(nextIndex + 1).join(" ").trimEnd().replace(/"/g, "");
 
             if (!clientType || !validateClientType(clientType)) {
-                const spaced = detectSpacedProductName(lineParts, 2, nextIndex);
+                const spaced = detectSpacedProductName(lineParts, 2, nextIndex, friendlyNameMap);
                 if (spaced.detected) {
                     const fixedName = spaced.suggestion || spaced.underscoredName;
                     warnings.push(`Corrected spaced product name "${spaced.spacedName}" to "${fixedName}" on RESERVE line.`);

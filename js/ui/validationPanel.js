@@ -111,19 +111,27 @@ export function initValidationPanel(state, { directiveList }) {
 
             if (isClickable) {
                 item.style.cursor = "pointer";
+                let scrollIndex = 0;
                 item.addEventListener("click", () => {
-                    // Toggle: clicking the same item again clears the highlight.
+                    // Repeated click on the same item: cycle through directives or clear.
                     if (activeItem === item) {
-                        activeItem.classList.remove("active");
-                        activeItem = null;
-                        directiveList.clearSpotlight();
-                        state.emit("spotlight-products", null);
+                        if (uids.length > 1) {
+                            scrollIndex = (scrollIndex + 1) % uids.length;
+                            const row = document.querySelector(`.directive-row[data-uid="${uids[scrollIndex]}"]`);
+                            if (row) row.scrollIntoView({ behavior: "smooth", block: "start" });
+                        } else {
+                            activeItem.classList.remove("active");
+                            activeItem = null;
+                            directiveList.clearSpotlight();
+                            state.emit("spotlight-products", null);
+                        }
                         return;
                     }
 
                     // Clear previous active state.
                     if (activeItem) activeItem.classList.remove("active");
                     activeItem = item;
+                    scrollIndex = 0;
                     item.classList.add("active");
 
                     // Spotlight directives.

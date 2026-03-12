@@ -80,7 +80,8 @@ export function initToolbar(state) {
 
         const reader = new FileReader();
         reader.onload = () => {
-            const { document: doc, warnings, error } = parseOptionsFile(reader.result);
+            const friendlyNameMap = state.licenseData.isLoaded ? state.licenseData.getFriendlyNameMap() : null;
+            const { document: doc, warnings, error } = parseOptionsFile(reader.result, friendlyNameMap);
             if (error) {
                 showError(error);
                 return;

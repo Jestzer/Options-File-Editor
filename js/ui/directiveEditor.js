@@ -87,6 +87,7 @@ export function initDirectiveEditor(state, options) {
         const saveBtn = document.createElement("button");
         saveBtn.className = "btn btn-primary";
         saveBtn.textContent = isNew ? "Add" : "Update";
+        saveBtn.disabled = true;
         actionsDiv.appendChild(saveBtn);
 
         const cancelBtn = document.createElement("button");
@@ -104,7 +105,10 @@ export function initDirectiveEditor(state, options) {
         // --- Render fields when type changes ---
         function renderFieldsForType(type) {
             fieldsContainer.innerHTML = "";
-            if (!type) return;
+            if (!type) {
+                saveBtn.disabled = true;
+                return;
+            }
 
             const fields = {};
 
@@ -198,6 +202,39 @@ export function initDirectiveEditor(state, options) {
                 });
                 fieldsContainer.appendChild(fields.text.wrapper);
             }
+
+            // Enable/disable save button based on required fields.
+            function updateSaveEnabled() {
+                let valid = true;
+
+                if (PRODUCT_TYPES.has(type) && fields.productName) {
+                    if (!fields.productName.input.value) valid = false;
+                }
+
+                if (NEEDS_CLIENT.has(type)) {
+                    if (fields.clientType && !fields.clientType.input.value) valid = false;
+                    if (fields.clientSpecified && !fields.clientSpecified.input.value.trim()) valid = false;
+                }
+
+                if (type === "RESERVE" && fields.seatCount) {
+                    if (!fields.seatCount.input.value || parseInt(fields.seatCount.input.value, 10) < 1) valid = false;
+                }
+
+                if (type === "MAX" && fields.maxSeats) {
+                    if (!fields.maxSeats.input.value || parseInt(fields.maxSeats.input.value, 10) < 1) valid = false;
+                }
+
+                if ((type === "GROUP" || type === "HOST_GROUP") && fields.groupName) {
+                    if (!fields.groupName.input.value.trim()) valid = false;
+                }
+
+                saveBtn.disabled = !valid;
+            }
+
+            // Listen for changes on all fields (delegated to handle replaced inputs).
+            fieldsContainer.addEventListener("input", updateSaveEnabled);
+            fieldsContainer.addEventListener("change", updateSaveEnabled);
+            updateSaveEnabled();
 
             // Wire save button.
             saveBtn.onclick = () => {

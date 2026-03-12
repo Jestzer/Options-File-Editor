@@ -113,7 +113,8 @@ async function handleDroppedFile(file, state) {
         }
         state.setLicenseData(licenseData);
     } else {
-        const { document: doc, error } = parseOptionsFile(text);
+        const friendlyNameMap = state.licenseData.isLoaded ? state.licenseData.getFriendlyNameMap() : null;
+        const { document: doc, error } = parseOptionsFile(text, friendlyNameMap);
         if (error) {
             showError(error);
             return;

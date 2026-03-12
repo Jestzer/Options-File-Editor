@@ -109,7 +109,7 @@ export function validate(state) {
                 results.push({
                     severity: "warning",
                     directiveId: d.uid,
-                    message: `NNU product "${d.productName}" exists on ${licenseCount} licenses. This INCLUDE does not specify a license number, so seats will be subtracted from all of them.`
+                    message: `NNU product "${d.productName}" exists on ${licenseCount} licenses. This INCLUDE does not specify a license number. Consider specifying one to control which license the seat is subtracted from.`
                 });
             }
         }

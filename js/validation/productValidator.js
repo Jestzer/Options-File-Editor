@@ -53,7 +53,15 @@ export function validate(state) {
         if (!productName) continue;
 
         if (!masterProductsSet.has(productName)) {
-            const suggestion = findClosestProduct(productName);
+            let suggestion = null;
+            let isFriendlyNameMatch = false;
+            if (state.licenseData.isLoaded) {
+                suggestion = state.licenseData.findFlexNameByFriendlyName(productName);
+                if (suggestion) isFriendlyNameMatch = true;
+            }
+            if (!suggestion) {
+                suggestion = findClosestProduct(productName);
+            }
             const suggestionText = suggestion ? ` Did you mean "${suggestion}"?` : "";
             const result = {
                 severity: "error",
@@ -61,8 +69,10 @@ export function validate(state) {
                 message: `"${productName}" is not a recognized MathWorks product.${suggestionText}`
             };
             if (suggestion) {
-                result.enteredProduct = productName;
-                result.suggestedProduct = suggestion;
+                if (!isFriendlyNameMatch) {
+                    result.enteredProduct = productName;
+                    result.suggestedProduct = suggestion;
+                }
                 result.action = { label: "Rename", type: "update", targetId: directive.uid, changes: { productName: suggestion } };
             }
             results.push(result);

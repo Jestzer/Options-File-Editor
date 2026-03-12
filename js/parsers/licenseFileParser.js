@@ -406,8 +406,12 @@ export function parseLicenseFile(rawText) {
 
             const borrowingEnabled = currentLine.includes("BORROW=");
 
+            const productFieldMatch = currentLine.match(/\bproduct=(.+?)(?="|\s+\w+=|\s*$)/i);
+            const friendlyName = productFieldMatch ? productFieldMatch[1] : "";
+
             licenseData.products.push(new LicenseProduct({
                 productName,
+                friendlyName,
                 seatCount,
                 productKey,
                 licenseOffering,

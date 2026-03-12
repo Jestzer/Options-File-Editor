@@ -1,6 +1,7 @@
 export class LicenseProduct {
-    constructor({ productName, seatCount, productKey, licenseOffering, licenseNumber, expirationDate, borrowingEnabled }) {
+    constructor({ productName, friendlyName, seatCount, productKey, licenseOffering, licenseNumber, expirationDate, borrowingEnabled }) {
         this.productName = productName;
+        this.friendlyName = friendlyName ?? "";
         this.seatCount = seatCount;
         this.originalSeatCount = seatCount;
         this.productKey = productKey;
@@ -91,5 +92,25 @@ export class LicenseData {
 
     isNnuOnly() {
         return this.products.length > 0 && this.products.every(p => p.licenseOffering === "NNU");
+    }
+
+    getFriendlyNameMap() {
+        if (this._friendlyNameMap) return this._friendlyNameMap;
+
+        this._friendlyNameMap = new Map();
+        for (const p of this.products) {
+            if (!p.friendlyName) continue;
+            const key = p.friendlyName.replace(/ /g, "_").toLowerCase();
+            if (!this._friendlyNameMap.has(key)) {
+                this._friendlyNameMap.set(key, p.productName);
+            }
+        }
+        return this._friendlyNameMap;
+    }
+
+    findFlexNameByFriendlyName(input) {
+        const map = this.getFriendlyNameMap();
+        const key = input.toLowerCase().replace(/ /g, "_");
+        return map.get(key) ?? null;
     }
 }
