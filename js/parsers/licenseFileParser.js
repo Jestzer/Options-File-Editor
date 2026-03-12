@@ -119,31 +119,30 @@ export function parseLicenseFile(rawText) {
                 };
             }
 
-            switch (parts.length) {
-                case 0:
-                case 1:
-                case 2:
-                    return { licenseData: null, warnings, error: "The SERVER line is missing required information." };
-                case 3:
-                    licenseData.serverLineHasPort = false;
-                    break;
-                case 4: {
-                    const serverPort = Number(parts[3]);
-                    if (!Number.isInteger(serverPort)) {
-                        return { licenseData: null, warnings, error: "The SERVER line has stray information." };
-                    }
-                    if (!hostID.includes("INTERNET=") && hostID.length !== 12) {
-                        return { licenseData: null, warnings, error: "The Host ID on the SERVER line is not specified correctly." };
-                    }
-                    break;
-                }
-                case 5:
-                    if (parts[4] !== "") {
-                        return { licenseData: null, warnings, error: "The SERVER line has stray information." };
-                    }
-                    break;
-                default:
+            if (parts.length < 3) {
+                return { licenseData: null, warnings, error: "The SERVER line is missing required information." };
+            }
+
+            if (parts.length === 3) {
+                licenseData.serverLineHasPort = false;
+            } else {
+                const serverPort = Number(parts[3]);
+                if (!Number.isInteger(serverPort)) {
                     return { licenseData: null, warnings, error: "The SERVER line has stray information." };
+                }
+                if (!hostID.includes("INTERNET=") && hostID.length !== 12) {
+                    return { licenseData: null, warnings, error: "The Host ID on the SERVER line is not specified correctly." };
+                }
+
+                // Validate optional keywords after the port (PRIMARY_IS_MASTER, HEARTBEAT_INTERVAL=, SERVER_TIMEOUT=).
+                for (let k = 4; k < parts.length; k++) {
+                    const token = parts[k];
+                    if (token === "") continue; // trailing space
+                    if (token === "PRIMARY_IS_MASTER") continue;
+                    if (token.startsWith("HEARTBEAT_INTERVAL=")) continue;
+                    if (token.startsWith("SERVER_TIMEOUT=")) continue;
+                    return { licenseData: null, warnings, error: "The SERVER line has stray information." };
+                }
             }
             continue;
         }
