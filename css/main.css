@@ -27,6 +27,76 @@
     --success: #2ecc71;
 }
 
+/* Mobile gate — hidden on desktop */
+#mobile-gate {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    #mobile-gate {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 32px;
+        background: var(--bg-primary);
+        text-align: center;
+    }
+
+    .mobile-gate-content {
+        max-width: 360px;
+    }
+
+    .mobile-gate-icon {
+        width: 64px;
+        height: 64px;
+        color: var(--accent);
+        margin: 0 auto 24px;
+        display: block;
+    }
+
+    .mobile-gate-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 12px;
+    }
+
+    .mobile-gate-description {
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text-secondary);
+        margin-bottom: 24px;
+    }
+
+    .mobile-gate-divider {
+        width: 48px;
+        height: 2px;
+        background: var(--border-color);
+        margin: 0 auto 24px;
+        border-radius: 1px;
+    }
+
+    .mobile-gate-message {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .mobile-gate-subtext {
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    #toolbar,
+    #app-layout,
+    #drop-overlay {
+        display: none !important;
+    }
+}
+
 html, body {
     height: 100%;
     font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
